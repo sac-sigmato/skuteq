@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
-import 'attendance_widget.dart'; // Assuming this exists
-import 'academic_page.dart'; // Assuming this exists
-import 'profile_page.dart'; // Assuming this exists
-import 'invoice_page.dart'; // Assuming this exists
-import 'select_child_page.dart'; // Assuming this exists
-import 'login_page.dart'; // Assuming this exists
+// For the Fear tab
+// Import your existing pages
+import 'attendance_widget.dart';
+import 'academic_page.dart';
+import 'profile_page.dart';
+import 'invoice_page.dart';
+import 'select_child_page.dart';
+import 'login_page.dart';
+import 'homework_page.dart';
+
+// Import new pages we'll create
+import 'documents_page.dart';
+import 'contact_teacher_page.dart';
+import 'contact_admin_page.dart';
+import 'faq_page.dart';
+import 'settings_page.dart';
+import 'fees_page.dart'; 
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -286,7 +297,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   const Color(0xFF6C63FF),
                   Icons.calendar_today,
                   onClick: () {
-                    // Assuming AttendancePage exists
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -314,6 +324,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   _getStringData(studentData["stats"], "receipts", "0"),
                   const Color(0xFFFFC107),
                   Icons.receipt,
+                  onClick: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DocumentsPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildStatCard(
                   "Invoices",
@@ -359,8 +377,29 @@ class _StudentDashboardState extends State<StudentDashboard> {
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           onTap: (index) {
             setState(() {
-              currentIndex = index;
+              currentIndex = 0;
             });
+
+            if (index == 1) {
+              // Navigate to Homework page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeworkPage()),
+              );
+            } else if (index == 2) {
+              // Navigate to Fear page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FeesPage()),
+              );
+            } else if (index == 3) {
+              // Navigate to Student Profile page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()),
+              );
+            }
+            // Index 0 stays on home page
           },
           items: const [
             BottomNavigationBarItem(
@@ -418,23 +457,65 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 _buildDrawerItem(
                   icon: Icons.description,
                   title: 'Documents',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DocumentsPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   icon: Icons.contacts,
                   title: 'Contact Teacher',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactTeacherPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   icon: Icons.home_work,
                   title: 'Contact Admin/School',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ContactAdminPage(),
+                      ),
+                    );
+                  },
                 ),
-                _buildDrawerItem(icon: Icons.chat, title: 'FAQs', onTap: () {}),
+                _buildDrawerItem(
+                  icon: Icons.chat,
+                  title: 'FAQs',
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const FAQPage()),
+                    );
+                  },
+                ),
                 _buildDrawerItem(
                   icon: Icons.settings,
                   title: 'Settings',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsPage(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDrawerItem(
                   icon: Icons.logout,
@@ -443,11 +524,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   onTap: () {
                     // Handle logout
                     Navigator.pop(context); // Close drawer
-                    Navigator.push(
+                    Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const LoginPage(),
                       ),
+                      (route) => false,
                     );
                   },
                 ),
@@ -546,8 +628,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
             context,
             MaterialPageRoute(builder: (context) => const SelectChildPage()),
           );
-        }
-
+        },
       ),
     );
   }
@@ -822,6 +903,431 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ===== MISSING PAGES IMPLEMENTATION =====
+
+// Documents Page
+class DocumentsPage extends StatelessWidget {
+  const DocumentsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Documents',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: const [
+          DocumentItem(title: 'Birth Certificate', type: 'PDF'),
+          DocumentItem(title: 'Aadhaar Card', type: 'PDF'),
+          DocumentItem(title: 'Previous Marksheet', type: 'PDF'),
+          DocumentItem(title: 'Medical Certificate', type: 'Image'),
+        ],
+      ),
+    );
+  }
+}
+
+// Contact Teacher Page
+class ContactTeacherPage extends StatelessWidget {
+  const ContactTeacherPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Contact Teachers',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: const [
+          TeacherContactItem(
+            name: 'Mrs. Sharma',
+            subject: 'Mathematics',
+            phone: '080987654321',
+          ),
+          TeacherContactItem(
+            name: 'Mr. Patel',
+            subject: 'Physics',
+            phone: '080987654322',
+          ),
+          TeacherContactItem(
+            name: 'Ms. Reddy',
+            subject: 'Chemistry',
+            phone: '080987654323',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Contact Admin Page
+class ContactAdminPage extends StatelessWidget {
+  const ContactAdminPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Contact Admin',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                InfoRow(title: 'School Phone', value: '080-26543210'),
+                InfoRow(title: 'Email', value: 'admin@school.com'),
+                InfoRow(
+                  title: 'Address',
+                  value: '123 School St, Education Nagar, City',
+                ),
+                InfoRow(title: 'Office Hours', value: '9:00 AM - 4:00 PM'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// FAQ Page
+class FAQPage extends StatelessWidget {
+  const FAQPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'FAQs',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: const [
+          FAQItem(
+            question: 'How to check attendance?',
+            answer: 'Go to Home page to see your attendance percentage.',
+          ),
+          FAQItem(
+            question: 'Where to submit homework?',
+            answer: 'Use the Homework section to view and submit assignments.',
+          ),
+          FAQItem(
+            question: 'How to contact teachers?',
+            answer: 'Use the Contact Teacher section in the drawer menu.',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Settings Page
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Settings',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          SwitchListTile(
+            title: const Text('Push Notifications'),
+            value: true,
+            onChanged: (value) {},
+          ),
+          SwitchListTile(
+            title: const Text('Email Notifications'),
+            value: false,
+            onChanged: (value) {},
+          ),
+          const ListTile(
+            leading: Icon(Icons.language),
+            title: Text('Language'),
+            trailing: Icon(Icons.arrow_forward_ios),
+          ),
+          const ListTile(
+            leading: Icon(Icons.security),
+            title: Text('Privacy & Security'),
+            trailing: Icon(Icons.arrow_forward_ios),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Fear Page (for bottom navigation)
+class FearPage extends StatelessWidget {
+  const FearPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Fear Analytics',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Fear Score Card
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Current Fear Score',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '75%',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: 0.75,
+                      backgroundColor: Colors.grey.shade200,
+                      color: Colors.orange,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Fear Areas
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Areas of Concern',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView(
+                children: const [
+                  FearAreaItem(subject: 'Mathematics', score: 85),
+                  FearAreaItem(subject: 'Physics', score: 70),
+                  FearAreaItem(subject: 'Chemistry', score: 60),
+                  FearAreaItem(subject: 'Biology', score: 45),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== SUPPORTING WIDGETS =====
+
+class DocumentItem extends StatelessWidget {
+  final String title;
+  final String type;
+
+  const DocumentItem({super.key, required this.title, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: const Icon(Icons.description),
+        title: Text(title),
+        subtitle: Text(type),
+        trailing: const Icon(Icons.download),
+      ),
+    );
+  }
+}
+
+class TeacherContactItem extends StatelessWidget {
+  final String name;
+  final String subject;
+  final String phone;
+
+  const TeacherContactItem({
+    super.key,
+    required this.name,
+    required this.subject,
+    required this.phone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: const CircleAvatar(child: Icon(Icons.person)),
+        title: Text(name),
+        subtitle: Text('$subject • $phone'),
+        trailing: IconButton(icon: const Icon(Icons.phone), onPressed: () {}),
+      ),
+    );
+  }
+}
+
+class FAQItem extends StatelessWidget {
+  final String question;
+  final String answer;
+
+  const FAQItem({super.key, required this.question, required this.answer});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ExpansionTile(
+        title: Text(
+          question,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        children: [
+          Padding(padding: const EdgeInsets.all(16.0), child: Text(answer)),
+        ],
+      ),
+    );
+  }
+}
+
+class FearAreaItem extends StatelessWidget {
+  final String subject;
+  final int score;
+
+  const FearAreaItem({super.key, required this.subject, required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subject,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: score / 100,
+              backgroundColor: Colors.grey.shade200,
+              color: score > 70
+                  ? Colors.red
+                  : score > 50
+                  ? Colors.orange
+                  : Colors.yellow,
+            ),
+            const SizedBox(height: 5),
+            Text('$score% concern level'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class InfoRow extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const InfoRow({super.key, required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value),
+        ],
       ),
     );
   }

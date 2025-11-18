@@ -1,8 +1,5 @@
-// lib/screens/login_page.dart
-
 import 'package:flutter/material.dart';
-import 'home_page.dart';
-import 'reset_password_page.dart'; // <-- create this page
+import 'reset_password_page.dart';
 import 'select_child_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,182 +12,287 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  int _currentStep = 0; // 0 = email step, 1 = password step
+
+  int _currentStep = 0;
   bool _isPasswordVisible = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _nextStep() {
-    if (_emailController.text.isNotEmpty) {
-      setState(() {
-        _currentStep = 1;
-      });
-    }
-  }
-
-  void _previousStep() {
-    setState(() {
-      _currentStep = 0;
-    });
-  }
-
-  void _login() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const SelectChildPage()),
-    );
-  }
-
-  void _navigateToResetPassword() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 26),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 🔹 Back button (only visible in password step)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _currentStep == 1
-                    ? IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: _previousStep,
-                      )
-                    : const SizedBox(height: 48),
+              const SizedBox(height: 5),
+
+              // 🔥 Back + Sign in header
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black,
+                        size: 22,
+                      ),
+                      onPressed: _currentStep == 1
+                          ? () => setState(() => _currentStep = 0)
+                          : () => Navigator.maybePop(context),
+                    ),
+                  ),
+
+                  const Text(
+                    "Sign in",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
 
-              // 🔹 Title
-              const Text(
-                'Sign in',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              // 🔥 EVERYTHING BELOW IS NOW CENTERED
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics:
+                        const NeverScrollableScrollPhysics(), // avoid scroll jumping
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_currentStep == 0) _buildEmailStep(),
+                        if (_currentStep == 1) _buildPasswordStep(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
-
-              // 🔹 Logo
-              Center(
-                child: Image.asset('assets/images/logo.png', height: 80),
-              ),
-              const SizedBox(height: 40),
-
-              // 🔹 Step 1: Email
-              if (_currentStep == 0) ...[
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    hintText: 'Email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF106EB4),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _nextStep,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: const Color(0xFF106EB4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Next',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
-              ],
-
-              // 🔹 Step 2: Password
-              if (_currentStep == 1) ...[
-                TextField(
-                  controller: _passwordController,
-                  obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    hintText: 'Password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF106EB4),
-                        width: 1,
-                      ),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: const Color(0xFF106EB4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // 🔹 Forgot Password
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Forgot your password? "),
-                    GestureDetector(
-                      onTap: _navigateToResetPassword,
-                      child: const Text(
-                        "Rest your password",
-                        style: TextStyle(
-                          color: Color(0xFF106EB4),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
         ),
       ),
+
+    );
+  }
+
+  
+Widget _buildEmailStep() {
+    // Footer placeholder height (match the height of password footer area)
+    const double footerHeight = 40.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Logo
+        Center(
+          child: Image.asset(
+            "assets/images/logo.png",
+            height: 35,
+            fit: BoxFit.contain,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Email field
+        TextField(
+          style: const TextStyle(
+             fontWeight: FontWeight.w800,
+          ),
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.email_outlined,
+              size: 20,
+              color: Colors.black87,
+            ),
+            hintText: "Email",
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 14,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFF0E70B8),
+                width: 1.4,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFD1D1D1),
+                width: 1.3,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        // Next button
+        ElevatedButton(
+          onPressed: () => setState(() => _currentStep = 1),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0E70B8),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            "Next",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+
+        // Keep same spacing/footer area as password step to avoid layout jump
+        const SizedBox(height: 16),
+
+        // Placeholder for forgot-password row — invisible but occupies same space
+        SizedBox(height: footerHeight, child: const SizedBox.shrink()),
+      ],
+    );
+  }
+
+  Widget _buildPasswordStep() {
+    const double footerHeight = 40.0; // same as email placeholder
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Logo
+        Center(
+          child: Image.asset(
+            "assets/images/logo.png",
+            height: 35,
+            fit: BoxFit.contain,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Password field
+        TextField(
+          style: const TextStyle(fontWeight: FontWeight.w800),
+          controller: _passwordController,
+          obscureText: !_isPasswordVisible,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(
+              Icons.lock_outline,
+              size: 20,
+              color: Colors.black87,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                size: 20,
+                color: Colors.grey,
+              ),
+              onPressed: () =>
+                  setState(() => _isPasswordVisible = !_isPasswordVisible),
+            ),
+            hintText: "Password",
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 14,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFF0E70B8),
+                width: 1.4,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Color(0xFFD1D1D1),
+                width: 1.3,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        // Login button
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SelectChildPage()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0E70B8),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            elevation: 0,
+          ),
+          child: const Text(
+            "Login",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Footer row (visible here)
+        SizedBox(
+          height: footerHeight,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Forgot your password? ",
+                style: TextStyle(fontSize: 13, color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ResetPasswordPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Reset your password",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF0E70B8),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
