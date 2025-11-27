@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+// lib/screens/academic_page.dart
 import 'dart:convert';
+import 'package:flutter/material.dart';
 
 class AcademicPage extends StatefulWidget {
   const AcademicPage({super.key});
@@ -9,57 +10,16 @@ class AcademicPage extends StatefulWidget {
 }
 
 class _AcademicPageState extends State<AcademicPage> {
-  // Corrected JSON data: All keys and string values use double quotes.
   final String sampleJsonData = '''
   {
     "exams": [
-      {
-        "name": "Mid-Term Exam",
-        "date": "March 2024",
-        "isSelected": true
-      },
-      {
-        "name": "Final Exam", 
-        "date": "June 2024",
-        "isSelected": false
-      },
-      {
-        "name": "Unit Test 1",
-        "date": "January 2024",
-        "isSelected": false
-      }
+      {"name":"Select Exam","date":"","isSelected":true}
     ],
     "subjects": [
-      {
-        "subject": "English",
-        "totalMarks": 100,
-        "obtainedMarks": 88, 
-        "percentage": 88 
-      },
-      {
-        "subject": "Kannada", 
-        "totalMarks": 100,
-        "obtainedMarks": 88, 
-        "percentage": 88
-      },
-      {
-        "subject": "Science",
-        "totalMarks": 100,
-        "obtainedMarks": 89, 
-        "percentage": 89
-      },
-      {
-        "subject": "Social",
-        "totalMarks": 100,
-        "obtainedMarks": 89, 
-        "percentage": 89
-      },
-      {
-        "subject": "Hindi",
-        "totalMarks": 100,
-        "obtainedMarks": 88,
-        "percentage": 88
-      }
+      {"subject":"Mathematics","totalMarks":100,"obtainedMarks":92,"percentage":92},
+      {"subject":"Science","totalMarks":100,"obtainedMarks":80,"percentage":80},
+      {"subject":"English","totalMarks":100,"obtainedMarks":88,"percentage":88},
+      {"subject":"Social Studies","totalMarks":100,"obtainedMarks":82,"percentage":82}
     ]
   }
   ''';
@@ -67,108 +27,155 @@ class _AcademicPageState extends State<AcademicPage> {
   late Map<String, dynamic> academicData;
   List<dynamic> exams = [];
   List<dynamic> subjects = [];
-  String selectedExam = "Mid-Term Exam";
+  String? selectedExam;
+
+  // Colors
+  static const Color _pageBg = Color(0xFFF5F8FB);
+  static const Color _cardBorder = Color(0xFFE7EFF7);
+  static const Color _mutedText = Color(0xFF9FA8B2);
+  static const Color _accentBlue = Color(0xFF2E9EE6);
+  static const Color _titleBlue = Color(0xFF244A6A);
+  static const Color _subjectBg = Color(0xFFF0F7FF);
+  static const Color _subjectBorder = Color(0xFFE6F3FB);
 
   @override
   void initState() {
     super.initState();
-    // This is where the FormatException occurs if the JSON string is invalid.
     academicData = json.decode(sampleJsonData);
-    exams = academicData['exams'];
-    subjects = academicData['subjects'];
-
-    String initialSelectedExam = "";
-    for (var exam in exams) {
-      if (exam['isSelected']) {
-        initialSelectedExam = exam['name'];
-        break;
-      }
-    }
-    selectedExam = initialSelectedExam.isNotEmpty
-        ? initialSelectedExam
-        : exams.first['name'];
+    exams = academicData['exams'] ?? [];
+    subjects = academicData['subjects'] ?? [];
+    selectedExam = exams.isNotEmpty ? exams.first['name'] : "Select Exam";
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.grey[100], // Slight grey background for card contrast
-      body: CustomScrollView(
-        slivers: [
-          // Custom AppBar/Header to match the screenshot's fixed blue bar
-          _buildSliverAppBar(context),
-
-          SliverList(
-            delegate: SliverChildListDelegate([
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: _pageBg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        centerTitle: true,
+        title: const Text(
+          'Academic Details',
+          style: TextStyle(
+            color: _titleBlue,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // Card 1: Exam Type
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _cardBorder),
+                ),
+                child: Row(
                   children: [
-                    const SizedBox(height: 20.0),
-                    // Select Exam Dropdown
-                    _buildExamDropdown(),
-                    const SizedBox(height: 20),
-
-                    // Report Cards (Card-based UI)
-                    _buildReportCardsList(),
-                    const SizedBox(height: 20), // Padding at the bottom
+                    const SizedBox(
+                      width: 110,
+                      child: Text(
+                        'Exam Type',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          // TODO: open exam selector
+                        },
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _cardBorder),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                selectedExam ?? 'Select Exam',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.keyboard_arrow_down,
+                                color: Colors.black45,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
 
-  // Custom SliverAppBar for the persistent blue header/back button area
-  Widget _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      automaticallyImplyLeading: false,
-      pinned:
-          false, // Set to false to allow scrolling up (matches typical app behavior)
-      expandedHeight: 140.0,
-      backgroundColor: Colors.blue[700], // Slightly darker blue for header
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: EdgeInsets.zero,
-        centerTitle: false,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Back Button and Title/Icon Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back Button implementation
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+              const SizedBox(height: 14),
+
+              // Card 2: Subjects (separate container)
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: _cardBorder),
                   ),
-                  const SizedBox(width: 8),
-
-                  // Title
-                  const Expanded(
-                    child: Text(
-                      'Academic Reports',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Subjects header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                        child: Text(
+                          'Subjects',
+                          style: TextStyle(
+                            color: _accentBlue,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
-                  // Icon (Graduation Cap)
-                  const Icon(Icons.school, size: 30, color: Colors.white70),
-                ],
+                      // Subject list
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Column(
+                              children: subjects
+                                  .map((s) => _subjectTile(s))
+                                  .toList(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -177,165 +184,90 @@ class _AcademicPageState extends State<AcademicPage> {
     );
   }
 
-  // Exam Dropdown widget
-  Widget _buildExamDropdown() {
-    List<String> examNames = exams
-        .map((exam) => exam['name'] as String)
-        .toList();
+  Widget _subjectTile(dynamic s) {
+    final String name = (s['subject'] ?? '').toString();
+    final int max = (s['totalMarks'] ?? 0) is num
+        ? (s['totalMarks'] as num).toInt()
+        : 0;
+    final int obtained = (s['obtainedMarks'] ?? 0) is num
+        ? (s['obtainedMarks'] as num).toInt()
+        : 0;
+    final int percent =
+        (s['percentage'] ?? (max == 0 ? 0 : (obtained * 100 ~/ max))) is num
+        ? (s['percentage'] as num).toInt()
+        : (max == 0 ? 0 : (obtained * 100 ~/ max));
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      margin: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _subjectBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _subjectBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _titleBlue,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _miniChip("Max $max"),
+                    const SizedBox(width: 8),
+                    _miniChip("Secured $obtained"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: _subjectBorder),
+            ),
+            child: Text(
+              "$percent%",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: _titleBlue,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: _subjectBorder),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          isExpanded: true,
-          value: selectedExam,
-          hint: const Text('Select Exam'),
-          icon: const Icon(Icons.keyboard_arrow_down),
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
-          onChanged: (String? newValue) {
-            setState(() {
-              selectedExam = newValue!;
-            });
-          },
-          items: examNames.map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(value: value, child: Text(value));
-          }).toList(),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: _mutedText,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );
-  }
-
-  // Report Cards List (Card-based UI)
-  Widget _buildReportCardsList() {
-    return Column(
-      children: subjects.map<Widget>((subject) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: _buildSubjectCard(subject),
-        );
-      }).toList(),
-    );
-  }
-
-  // Single Subject Card Widget (matches SS image_b40d00.png)
-  Widget _buildSubjectCard(Map<String, dynamic> subject) {
-    int totalMarks = (subject['totalMarks'] as num).toInt();
-    int obtainedMarks = (subject['obtainedMarks'] as num).toInt();
-    double percentage = (subject['percentage'] as num).toDouble();
-    Color percentageColor = _getPercentageColor(percentage);
-
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Row 1: Subject Name and Percentage
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Subject Name (Inside the rounded light blue box)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  subject['subject'],
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-
-              // Percentage
-              Text(
-                '${percentage.toInt()}%',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: percentageColor,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Row 2: Max Marks
-          _buildDetailRow(
-            title: 'Max Marks',
-            value: totalMarks.toString(),
-            valueColor: Colors.blue.shade600!,
-          ),
-          const SizedBox(height: 8),
-
-          // Row 3: Secured Marks
-          _buildDetailRow(
-            title: 'Secured Marks',
-            value: obtainedMarks.toString(),
-            valueColor: Colors.blue.shade600!,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Helper for detail rows (Max Marks, Secured Marks)
-  Widget _buildDetailRow({
-    required String title,
-    required String value,
-    required Color valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.blue.shade700,
-            fontSize: 14,
-          ), // Text color matches SS
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: valueColor,
-            fontSize: 14,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _getPercentageColor(double percentage) {
-    // Coloring logic for the percentage text
-    if (percentage >= 85) return Colors.green.shade700!;
-    if (percentage >= 70) return Colors.blue.shade700!;
-    if (percentage >= 50) return Colors.orange.shade700!;
-    return Colors.red.shade700!;
   }
 }

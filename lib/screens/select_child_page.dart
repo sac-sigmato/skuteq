@@ -42,26 +42,29 @@ class _SelectChildPageState extends State<SelectChildPage> {
     return Scaffold(
       backgroundColor: pageBg,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
-          child: Column(
-            children: [
-              // Full-width header: use negative horizontal margin to break out of outer padding
-              Container(
-                // Make full-bleed by negating the parent's horizontal padding (12)
-                margin: const EdgeInsets.symmetric(horizontal: -12),
+        child: Column(
+          children: [
+            // ---------- FULL WIDTH HEADER (outside inner padding) ----------
+            Container(
+              width: double.infinity,
+              color: Colors
+                  .transparent, // leave transparent so header card shadow visible on page bg
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Container(
+                // inner white card
+                width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  // borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.03),
-                      // blurRadius: 12,
-                      offset: const Offset(0, 3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
@@ -71,6 +74,11 @@ class _SelectChildPageState extends State<SelectChildPage> {
                     InkWell(
                       onTap: () {
                         // open drawer or menu
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Open drawer (implement)'),
+                          ),
+                        );
                       },
                       customBorder: const CircleBorder(),
                       child: Padding(
@@ -102,44 +110,57 @@ class _SelectChildPageState extends State<SelectChildPage> {
                   ],
                 ),
               ),
+            ),
 
-              const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-              // Subtitle (keeps normal padding)
-              Align(
-                alignment: Alignment.centerLeft,
+            // ---------- CONTENT (keeps inner padding) ----------
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      "Please select your Child",
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
+                  children: [
+                    // Subtitle
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            "Please select your Child",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Child list
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(top: 8, bottom: 24),
+                        itemCount: childrenData.length,
+                        itemBuilder: (context, index) {
+                          final child = childrenData[index];
+                          return _buildChildCard(
+                            name: child["name"],
+                            school: child["school"],
+                            imagePath: child["image"],
+                            highlight: child["highlight"] ?? false,
+                            primaryBlue: primaryBlue,
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              // Child list
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.only(top: 8, bottom: 24),
-                  itemCount: childrenData.length,
-                  itemBuilder: (context, index) {
-                    final child = childrenData[index];
-                    return _buildChildCard(
-                      name: child["name"],
-                      school: child["school"],
-                      imagePath: child["image"],
-                      highlight: child["highlight"] ?? false,
-                      primaryBlue: primaryBlue,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
