@@ -480,38 +480,42 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     child: ClipOval(child: _buildAvatarWidget(avatarUrl)),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        profile['name'] ?? 'Parent Name',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ProfilePage(),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProfilePage(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            profile['name'] ?? 'Parent Name',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: Colors.black87,
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Parent ID ${profile['parentId']}",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Parent ID ${profile['parentId']}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 18),
 
             // QUICK ACTIONS (ROW OF 2)
