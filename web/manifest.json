@@ -1,6 +1,6 @@
 {
-    "name": "skutech_app",
-    "short_name": "skutech_app",
+    "name": "skuteq_app",
+    "short_name": "skuteq_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

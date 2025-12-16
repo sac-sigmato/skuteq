@@ -19,19 +19,19 @@ class _StudentDashboardState extends State<StudentDashboard> {
   String selectedYear = "AY 2024-2025 ( Grade 5 Section B )";
   int currentIndex = 0;
 
-  // <-- user profile (uses your uploaded local path; toolchain will convert it)
+  // Key used to anchor the popup menu to the year pill.
+  final GlobalKey _yearKey = GlobalKey();
+
   final Map<String, dynamic> userProfile = {
     "name": "Rohit Sharma",
     "parentId": "P-3021",
     "email": "rohit.sharma@example.com",
-    // local path you uploaded; your infra will transform to a URL at runtime.
     "avatarUrl": "/mnt/data/e4d92258-e3be-4cd3-87fb-18ece55927a3.png",
   };
 
-  // Dummy data (replace with actual API response)
   final Map<String, dynamic> studentData = {
     "studentInfo": {
-      "name": "Aaray Sharma",
+      "name": "Aarav Sharma", // FIXED: Changed from "Aaray" to "Aarav"
       "id": "ID 6986911",
       "school": "VVP School - Maghadha Campus",
       "image": "assets/images/student1.png",
@@ -66,95 +66,84 @@ class _StudentDashboardState extends State<StudentDashboard> {
     return Scaffold(
       backgroundColor: pageBg,
       drawer: _buildDrawer(context),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          color: pageBg,
+          padding: const EdgeInsets.symmetric(
+            vertical: 20,
+          ), // <-- vertical 20 for both
+          child: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
 
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        toolbarHeight: 80,
-        title: const Padding(
-          padding: EdgeInsets.only(top: 16.0),
-          child: Text(
-            'Dashboard',
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
+            // Remove extra paddings since parent has padding
+            title: const Text(
+              'Dashboard',
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+              ),
             ),
-          ),
-        ),
-        leading: Builder(
-          builder: (context) => Padding(
-            padding: const EdgeInsets.only(top: 12.0),
-            child: IconButton(
-              icon: const Icon(Icons.menu, color: Colors.black87),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+
+            leading: Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.black87),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
             ),
           ),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
         child: Column(
           children: [
-            // Student card (blue rounded card with white avatar ring)
-            Container(
-              width: double.infinity,
-              height: 180,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => StudentDetailsPage(),
-                    ),
-                  );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: primaryBlue,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-
-                  child: Row(
-                    children: [
-                      // Avatar with white ring
-                      Container(
-                        width: 140,
-                        height: 140,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            _str('image'),
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: Colors.white,
-                              child: const Icon(
-                                Icons.person,
-                                size: 36,
-                                color: Colors.grey,
-                              ),
-                            ),
+            // Student Profile Card with Avatar - FIXED OVERFLOW
+            SizedBox(
+              height: 140, // Reduced height for better proportion
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Blue card background - positioned lower
+                  Positioned(
+                    top: 0, // Lower position to allow avatar overlap
+                    left: 0,
+                    right: 0,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => StudentDetailsPage(),
                           ),
+                        );
+                      },
+                      child: Container(
+                        height: 150, // Reduced height
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF0E70B8), Color(0xFF0A5F93)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 14,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      // Text info
-                      Expanded(
+                        padding: const EdgeInsets.only(
+                          left: 150, // Adjusted for smaller avatar
+                          right: 16,
+                          top: 16,
+                          bottom: 16,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -163,20 +152,20 @@ class _StudentDashboardState extends State<StudentDashboard> {
                               _str("name"),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 22, // Slightly smaller
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             Text(
                               _str("id"),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 4),
                             Text(
                               _str("school"),
                               style: const TextStyle(
@@ -188,61 +177,100 @@ class _StudentDashboardState extends State<StudentDashboard> {
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
+
+                  // Avatar overlapping the card - PROPERLY POSITIONED
+                  Positioned(
+                    left: 16, // Adjusted left position
+                    top: 16, // Top aligned with Stack
+                    child: Container(
+                      width: 120, // Smaller avatar size
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 4, // Thinner border
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          _str('image'),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.person,
+                              size: 36,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // Year selector pill (the whole pill is tappable and anchored)
+            GestureDetector(
+              key: _yearKey,
+              onTap: () => _showYearMenu(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: const Color(0xFFE6EEF6)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        selectedYear,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 22),
+                  ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            // Year selector (pill-like)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      selectedYear,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _showYearPicker(context),
-                    child: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 22,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
+            const SizedBox(height: 24),
 
             // Stats grid (2x2)
             GridView.count(
               crossAxisCount: 2,
-              childAspectRatio: 2.9,
+              childAspectRatio: 2.2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               shrinkWrap: true,
@@ -261,7 +289,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     const Color(0xFF3F51B5),
                   ),
                 ),
-
                 InkWell(
                   onTap: () {
                     Navigator.push(
@@ -304,11 +331,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
               ],
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
           ],
         ),
       ),
 
+      // Bottom Navigation
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -325,6 +353,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
           currentIndex: currentIndex,
           selectedItemColor: primaryBlue,
           unselectedItemColor: const Color(0xFF9E9E9E),
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
           onTap: (index) {
             setState(() => currentIndex = index);
             if (index == 1) {
@@ -360,9 +390,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -371,7 +401,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            height: 6,
+            height: 8,
             decoration: BoxDecoration(
               color: topColor,
               borderRadius: const BorderRadius.vertical(
@@ -380,7 +410,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -389,16 +419,17 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF666666),
+                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   value,
                   style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black87,
                   ),
                   maxLines: 1,
@@ -415,118 +446,125 @@ class _StudentDashboardState extends State<StudentDashboard> {
   // -------------------- DRAWER --------------------
   Widget _buildDrawer(BuildContext context) {
     final profile = userProfile;
-    final avatarUrl = profile['avatarUrl'] as String? ?? '';
+    final String avatarUrl = profile['avatarUrl'] ?? '';
 
-    const Color dividerColor = Color(0xFFE6EEF6);
-    const Color primaryRed = Color(0xFFE35A58);
+    const Color borderColor = Color(0xFFE6EEF6);
+    const Color drawerBg = Color(0xFFF6F7FB);
+    const Color logoutRed = Color(0xFFE35A58);
 
     return Drawer(
       width: MediaQuery.of(context).size.width,
+      backgroundColor: drawerBg,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // TOP WHITE BAR WITH BACK ARROW
+            /// 🔹 Top Header (MATCHING IMAGE)
             Container(
+                margin: const EdgeInsets.symmetric(
+                vertical: 14,
+              ),
               color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
               child: Row(
                 children: [
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      size: 22,
-                      color: Colors.black87,
+                  Container(
+                    width: 26,
+                    height: 26,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: Colors.black87,
+                      ),
+                      onPressed: () => Navigator.maybePop(context),
                     ),
-                    onPressed: () => Navigator.maybePop(context),
                   ),
                 ],
               ),
             ),
 
-            // Divider under the white bar
-            Container(height: 1, color: dividerColor),
-
             const SizedBox(height: 14),
 
-            // PROFILE CARD
+            /// 🔹 Profile Card
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12.0),
+              // margin: const EdgeInsets.symmetric(horizontal: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: dividerColor),
+                // borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  // Avatar
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: ClipOval(child: _buildAvatarWidget(avatarUrl)),
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: avatarUrl.isNotEmpty
+                        ? NetworkImage(avatarUrl)
+                        : null,
+                    child: avatarUrl.isEmpty
+                        ? const Icon(Icons.person, color: Colors.black54)
+                        : null,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ProfilePage(),
-                              ),
-                            );
-                          },
-                          child: Text(
-                            profile['name'] ?? 'Parent Name',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: Colors.black87,
-                            ),
-                          ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile['name'] ?? 'Rohit Sharma',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Parent ID ${profile['parentId']}",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Parent ID ${profile['parentId'] ?? 'P-3021'}",
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+
             const SizedBox(height: 18),
 
-            // QUICK ACTIONS (ROW OF 2)
+            /// 🔹 Quick Actions
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  Expanded(child: _quickAction(Icons.sync_alt, "Switch Child")),
+                  Expanded(
+                    child: _quickActionCard(
+                      icon: Icons.sync_alt,
+                      title: "Switch Child",
+                      onTap: () {},
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _quickAction(Icons.person_outline, "My Profile"),
+                    child: _quickActionCard(
+                      icon: Icons.person_outline,
+                      title: "My Profile",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProfilePage(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -534,51 +572,52 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
             const SizedBox(height: 16),
 
-            // LIST ITEMS
+            /// 🔹 Menu List
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Column(
                 children: [
-                  _drawerListTile(icon: Icons.settings, title: "Settings"),
+                  _drawerTile(
+                    icon: Icons.settings,
+                    title: "Settings",
+                    onTap: () {},
+                  ),
                   const SizedBox(height: 10),
-                  _drawerListTile(icon: Icons.help_outline, title: "FAQs"),
+                  _drawerTile(
+                    icon: Icons.help_outline,
+                    title: "FAQs",
+                    onTap: () {},
+                  ),
                   const SizedBox(height: 10),
-                  _drawerListTile(
+                  _drawerTile(
                     icon: Icons.info_outline,
                     title: "About Skuteq",
+                    onTap: () {},
                   ),
                 ],
               ),
             ),
 
-            // const Spacer(),
+            const Spacer(),
 
-            // LOGOUT BUTTON
+            /// 🔹 Logout Button
             Padding(
-              padding: const EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: 26,
-                top: 26,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 26),
               child: SizedBox(
-                height: 48,
+                height: 50,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.logout, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.logout, size: 20),
                   label: const Text(
                     "Logout",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryRed,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    backgroundColor: logoutRed,
+                    foregroundColor: Colors.white,
                     elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   onPressed: () {
                     Navigator.pushReplacement(
@@ -597,77 +636,80 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  /// Quick action card (Switch Child / My Profile)
-  Widget _quickAction(IconData icon, String label) {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6EEF6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 26, color: const Color(0xFF1F3D7A)),
-          const SizedBox(height: 6),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  /// List tile used inside drawer (wrapped visual style)
-  Widget _drawerListTile({
+  Widget _quickActionCard({
     required IconData icon,
     required String title,
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE6EEF6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF7FAFC),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: const Color(0xFF1F3D7A), size: 20),
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE6EEF6)),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 28, color: const Color(0xFF0E70B8)),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: Color(0xFF95A3B8),
-        ),
-        onTap: onTap,
       ),
     );
   }
 
-  // Avatar widget that picks asset vs network depending on the provided path.
+  Widget _drawerTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE6EEF6)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE6EEF6),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: const Color(0xFF0E70B8)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildAvatarWidget(String avatarPath) {
     if (avatarPath.isEmpty) {
       return const Icon(Icons.person, size: 28, color: Colors.grey);
@@ -680,7 +722,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
             const Icon(Icons.person, size: 28, color: Colors.grey),
       );
     }
-    // use Image.network for local uploaded path (tooling will transform /mnt/data -> http URL)
     return Image.network(
       avatarPath,
       fit: BoxFit.cover,
@@ -689,7 +730,50 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // Year picker bottom sheet
+  /// Show an anchored popup menu below the year pill.
+  /// Uses [_yearKey] to compute position so the popup appears right at the pill.
+  void _showYearMenu() async {
+    final years =
+        (studentData["years"] as List<dynamic>?)?.cast<String>() ?? <String>[];
+
+    if (_yearKey.currentContext == null || years.isEmpty) {
+      return;
+    }
+
+    final RenderBox renderBox =
+        _yearKey.currentContext!.findRenderObject()! as RenderBox;
+    final Offset topLeft = renderBox.localToGlobal(Offset.zero);
+    final Size size = renderBox.size;
+
+    final RelativeRect position = RelativeRect.fromLTRB(
+      topLeft.dx,
+      topLeft.dy + size.height,
+      topLeft.dx + size.width,
+      topLeft.dy,
+    );
+
+    final selected = await showMenu<String>(
+      context: context,
+      position: position,
+      items: years.map((y) {
+        return PopupMenuItem<String>(
+          value: y,
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Text(y, maxLines: 2, overflow: TextOverflow.ellipsis),
+          ),
+        );
+      }).toList(),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
+    if (selected != null) {
+      setState(() => selectedYear = selected);
+    }
+  }
+
+  // kept for compatibility; not used now
   void _showYearPicker(BuildContext context) {
     final years =
         (studentData["years"] as List<dynamic>?)?.cast<String>() ?? [];
