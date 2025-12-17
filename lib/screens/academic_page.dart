@@ -34,7 +34,7 @@ class _AcademicPageState extends State<AcademicPage> {
   static const Color cardBg = Colors.white;
   static const Color cardBorder = Color(0xFFE7EFF7);
   static const Color subjectBg = Color(0xFFEFF6FF);
-  static const Color subjectBorder = Color(0xFFE3F0FF);
+  static const Color subjectBorder = Color(0xFFEAF4FF);
 
   static const Color titleColor = Color(0xFF0B2E4E);
   static const Color accentBlue = Color(0xFF2E9EE6);
@@ -120,7 +120,7 @@ class _AcademicPageState extends State<AcademicPage> {
       child: Row(
         children: [
           const SizedBox(
-            width: 110,
+            width: 180,
             child: Text(
               "Exam Type",
               style: TextStyle(
@@ -146,7 +146,7 @@ class _AcademicPageState extends State<AcademicPage> {
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const Icon(Icons.keyboard_arrow_down, color: Colors.black45),
@@ -208,7 +208,7 @@ class _AcademicPageState extends State<AcademicPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: subjectBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
         border: Border.all(color: subjectBorder),
       ),
       child: Row(
@@ -271,7 +271,7 @@ class _AcademicPageState extends State<AcademicPage> {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: subjectBorder),
       ),
       child: Text(
@@ -279,7 +279,7 @@ class _AcademicPageState extends State<AcademicPage> {
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
-          color: mutedText,
+          color: Colors.black,
         ),
       ),
     );

@@ -1,7 +1,6 @@
-// lib/screens/receipts_page.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'receipt_details_page.dart'; // <-- import the new page
+import 'receipt_details_page.dart';
 
 class ReceiptsPage extends StatefulWidget {
   const ReceiptsPage({super.key});
@@ -21,162 +20,185 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
       "amountPaid": "₹ 58,400"
     },
     "receipts": [
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 4,800"},
-      {"receiptNo":"RCP-1041","date":"07 Oct 2024","amount":"₹ 1,200"},
-      {"receiptNo":"RCP-1040","date":"05 Oct 2024","amount":"₹ 800"},
-      {"receiptNo":"RCP-1039","date":"03 Oct 2024","amount":"₹ 1,500"},
-      {"receiptNo":"RCP-1038","date":"01 Oct 2024","amount":"₹ 900"}
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
+      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"}
     ]
   }
   ''';
 
-  static const Color kBlue = Color(0xFF2E9EE6);
-  static const Color kMuted = Color(0xFF9FA8B2);
-  static const Color kBg = Color(0xFFF5F8FB);
+  /// COLORS (MATCH SS)
+  static const Color pageBg = Color(0xFFF6F7FB);
+  static const Color cardBorder = Color(0xFFE6EEF6);
+  static const Color primaryBlue = Color(0xFF1E88E5);
+  static const Color mutedText = Color(0xFF7A869A);
 
   @override
   void initState() {
     super.initState();
     final data = json.decode(sampleJsonData);
-    summaryData = data["summary"];
-    receiptsData = List<Map<String, dynamic>>.from(data["receipts"]);
+    summaryData = Map<String, dynamic>.from(data['summary']);
+    receiptsData = List<Map<String, dynamic>>.from(data['receipts']);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Receipts",
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: pageBg,
+
       body: Column(
         children: [
-          _buildSummaryCard(),
-          Expanded(child: _buildList()),
-          _buildBottomNav(),
+          /// 🔹 HEADER (INSIDE BODY)
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            margin: const EdgeInsets.only(top: 20),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        "Receipts",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+          ),
+
+          /// 🔹 TOP GAP (LIKE SS)
+          Container(height: 14, color: pageBg),
+
+          /// 🔹 CONTENT
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  _summaryCard(),
+                  const SizedBox(height: 14),
+                  _receiptList(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryCard() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE7EFF7)),
-        ),
-        child: Row(
-          children: [
-            // LEFT
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Total Receipts',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: kBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${summaryData['totalReceipts']}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+  // ---------------- SUMMARY CARD ----------------
 
-            const SizedBox(width: 12),
-
-            // RIGHT
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 14,
+  Widget _summaryCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          /// LEFT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Total Receipts",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: primaryBlue,
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 6),
+                Text(
+                  "${summaryData['totalReceipts']}",
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Amount Paid',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: kBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      summaryData['amountPaid'],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          /// RIGHT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                const Text(
+                  "Amount Paid",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: primaryBlue,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  summaryData['amountPaid'],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildList() {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-      itemCount: receiptsData.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, index) => _receiptTile(receiptsData[index]),
+  // ---------------- RECEIPTS LIST ----------------
+
+  Widget _receiptList() {
+    return Column(
+      children: receiptsData
+          .map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _receiptTile(r),
+            ),
+          )
+          .toList(),
     );
   }
 
   Widget _receiptTile(Map<String, dynamic> r) {
     return InkWell(
+      borderRadius: BorderRadius.circular(14),
       onTap: () {
-        // Navigate to details page and pass receiptNo
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -185,72 +207,51 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE7EFF7)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
         ),
         child: Row(
           children: [
-            // REMOVED ICON → ONLY TEXT NOW
+            /// LEFT TEXT
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// RECEIPT NUMBER (BLACK)
                   Text(
                     "#${r['receiptNo']}",
                     style: const TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
-
-                  /// DATE (MUTED GRAY)
                   Text(
                     r['date'],
                     style: const TextStyle(
                       fontSize: 12,
-                      color: kMuted,
-                      fontWeight: FontWeight.w500,
+                      color: mutedText,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ],
               ),
             ),
 
-            /// AMOUNT (BLACK)
+            /// AMOUNT
             Text(
               r['amount'],
               style: const TextStyle(
                 fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE0E0E0))),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Icon(Icons.home, color: kBlue),
-          Icon(Icons.person, color: Colors.black54),
-          Icon(Icons.notifications, color: Colors.black54),
-        ],
       ),
     );
   }
