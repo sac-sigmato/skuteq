@@ -1,63 +1,253 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/exam_type_dropdown.dart';
+
+import 'package:skuteq_app/services/academic_service.dart';
 
 class AcademicPage extends StatefulWidget {
-  const AcademicPage({super.key});
+  final Map<String, dynamic> initialReport;
+  final List<ExamOption> exams;
+  final String selectedExamId;
+
+  final Future<Map<String, dynamic>> Function(String examId) onFetchByExamId;
+
+  AcademicPage({
+    super.key,
+    required this.initialReport,
+    required this.exams,
+    required this.selectedExamId,
+    required this.onFetchByExamId,
+  });
 
   @override
   State<AcademicPage> createState() => _AcademicPageState();
 }
 
 class _AcademicPageState extends State<AcademicPage> {
-  final String sampleJsonData = '''
-  {
-    "exams": [
-      {"name":"Select Exam","isSelected":true}
-    ],
-    "subjects": [
-      {"subject":"Mathematics","totalMarks":100,"obtainedMarks":92,"percentage":92},
-      {"subject":"Science","totalMarks":100,"obtainedMarks":80,"percentage":80},
-      {"subject":"English","totalMarks":100,"obtainedMarks":88,"percentage":88},
-      {"subject":"Social Studies","totalMarks":100,"obtainedMarks":82,"percentage":82},
-      {"subject":"Social Studies","totalMarks":100,"obtainedMarks":82,"percentage":82},
-      {"subject":"Social Studies","totalMarks":100,"obtainedMarks":82,"percentage":82}
-    ]
-  }
-  ''';
-
-  late Map<String, dynamic> academicData;
-  List subjects = [];
-  String selectedExam = "Select Exam";
-
-  // 🎨 COLORS — MATCH SS
-  static const Color pageBg = Color(0xFFF6F9FC);
+  // 🎨 COLORS
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBg = Colors.white;
   static const Color cardBorder = Color(0xFFE7EFF7);
   static const Color subjectBg = Color(0xFFEFF6FF);
   static const Color subjectBorder = Color(0xFFEAF4FF);
 
   static const Color titleColor = Color(0xFF0B2E4E);
-  static const Color accentBlue = Color(0xFF2E9EE6);
+  static const Color primaryBlue = Color(0xFF1E88E5);
   static const Color mutedText = Color(0xFF9AA6B2);
+
+  bool _loading = false;
+
+  late List<ExamOption> _exams;
+  late String _selectedExamId;
+  late String _selectedExamName;
+
+  List<Map<String, dynamic>> _subjects = [];
 
   @override
   void initState() {
     super.initState();
-    academicData = json.decode(sampleJsonData);
-    subjects = academicData['subjects'];
+    _exams = widget.exams;
+    _selectedExamId = widget.selectedExamId;
+
+    final selected = _exams.firstWhere(
+      (e) => e.id == _selectedExamId,
+      orElse: () => const ExamOption(id: "", name: "Select Exam"),
+    );
+    _selectedExamName = selected.name;
+
+    _subjects = _extractSubjects(widget.initialReport);
+  }
+
+  // ✅ robust subject extractor
+  List<Map<String, dynamic>> _extractSubjects(dynamic json) {
+    final out = <Map<String, dynamic>>[];
+
+    void walk(dynamic node) {
+      if (node == null) return;
+
+      if (node is List) {
+        for (final it in node) walk(it);
+        return;
+      }
+
+      if (node is Map) {
+        // If this map looks like subject row
+        final subject =
+            (node['subject'] ?? node['subject_name'] ?? node['name'])
+                ?.toString();
+
+        final total =
+            node['max_marks'] ??
+            node['total_marks'] ??
+            node['max_marks'] ??
+            node['out_of'];
+
+        final obtained =
+            node['secured_marks'] ??
+            node['obtained_marks'] ??
+            node['marks_obtained'] ??
+            node['score'] ??
+            node['marks'];
+
+        if (subject != null &&
+            subject.isNotEmpty &&
+            (total != null || obtained != null)) {
+          out.add(Map<String, dynamic>.from(node));
+        }
+
+        for (final v in node.values) walk(v);
+      }
+    }
+
+    walk(json);
+
+    // normalize for UI
+    final normalized = <Map<String, dynamic>>[];
+    for (final raw in out) {
+      final subject =
+          (raw['subject'] ?? raw['subject_name'] ?? raw['name'])?.toString() ??
+          '-';
+
+      num total =
+          num.tryParse(
+            (raw['max_marks'] ??
+                    raw['total_marks'] ??
+                    raw['max_marks'] ??
+                    raw['out_of'] ??
+                    0)
+                .toString(),
+          ) ??
+          0;
+
+      num obtained =
+          num.tryParse(
+            (raw['secured_marks'] ??
+                    raw['obtained_marks'] ??
+                    raw['marks_obtained'] ??
+                    raw['score'] ??
+                    raw['marks'] ??
+                    0)
+                .toString(),
+          ) ??
+          0;
+
+      num? pct = num.tryParse(
+        (raw['percentage'] ?? raw['percent'] ?? '').toString(),
+      );
+      pct ??= (total == 0) ? 0 : ((obtained / total) * 100);
+
+      normalized.add({
+        "subject": subject,
+        "max_marks": total,
+        "secured_marks": obtained,
+        "percentage": pct.round(),
+      });
+    }
+
+    // unique
+    final seen = <String>{};
+    final unique = <Map<String, dynamic>>[];
+    for (final s in normalized) {
+      final key = "${s['subject']}_${s['max_marks']}_${s['secured_marks']}";
+      if (seen.add(key)) unique.add(s);
+    }
+
+    return unique;
+  }
+
+  Future<void> _pickExam() async {
+    final selected = await showModalBottomSheet<ExamOption>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6EEF6),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                "Select Exam",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 10),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _exams.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (ctx, i) {
+                    final e = _exams[i];
+                    final isSel = e.id == _selectedExamId;
+
+                    return ListTile(
+                      title: Text(
+                        e.name,
+                        style: TextStyle(
+                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                        ),
+                      ),
+                      trailing: isSel
+                          ? const Icon(Icons.check_circle, color: primaryBlue)
+                          : null,
+                      onTap: () => Navigator.pop(ctx, e),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+    if (selected.id.isEmpty) return; // ignore "Select Exam"
+    if (selected.id == _selectedExamId) return;
+
+    setState(() {
+      _loading = true;
+      _selectedExamId = selected.id;
+      _selectedExamName = selected.name;
+    });
+
+    try {
+      final res = await widget.onFetchByExamId(selected.id);
+      if (!mounted) return;
+
+      setState(() {
+        _subjects = _extractSubjects(res);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to load exam report: $e")));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: pageBg,
-
       body: Column(
         children: [
-          /// 🔹 CUSTOM HEADER
+          // header
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
             margin: const EdgeInsets.only(top: 20),
             child: SafeArea(
               bottom: false,
@@ -85,29 +275,35 @@ class _AcademicPageState extends State<AcademicPage> {
             ),
           ),
 
-          /// ✅ THIS IS THE GAP YOU SEE IN THE SCREENSHOT
           Container(height: 14, color: pageBg),
 
-          /// 🔹 PAGE CONTENT
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  _examTypeCard(),
-                  const SizedBox(height: 14),
-                  _subjectsCard(),
-                ],
-              ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      _examTypeCard(),
+                      const SizedBox(height: 14),
+                      _subjectsCard(),
+                    ],
+                  ),
+                ),
+                if (_loading)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.white.withOpacity(0.55),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-
-  // ---------------- EXAM TYPE CARD ----------------
 
   Widget _examTypeCard() {
     return Container(
@@ -131,35 +327,43 @@ class _AcademicPageState extends State<AcademicPage> {
             ),
           ),
           Expanded(
-            child: Container(
-              height: 42,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: cardBorder),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    selectedExam,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Icon(Icons.keyboard_arrow_down, color: Colors.black45),
-                ],
-              ),
+            child: ExamTypeDropdown(
+              exams: _exams,
+              selectedExamId: _selectedExamId,
+              selectedExamName: _selectedExamName,
+              disabled: _loading,
+              onSelected: (selected) async {
+                if (selected.id.isEmpty) return;
+                if (selected.id == _selectedExamId) return;
+
+                setState(() {
+                  _loading = true;
+                  _selectedExamId = selected.id;
+                  _selectedExamName = selected.name;
+                });
+
+                try {
+                  final res = await widget.onFetchByExamId(selected.id);
+                  if (!mounted) return;
+
+                  setState(() {
+                    _subjects = _extractSubjects(res);
+                  });
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to load exam report: $e")),
+                  );
+                } finally {
+                  if (mounted) setState(() => _loading = false);
+                }
+              },
             ),
           ),
         ],
       ),
     );
   }
-
-  // ---------------- SUBJECTS CARD ----------------
 
   Widget _subjectsCard() {
     return Expanded(
@@ -173,9 +377,8 @@ class _AcademicPageState extends State<AcademicPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(8, 4, 8, 8),
               child: Text(
                 "Subjects",
                 style: TextStyle(
@@ -185,14 +388,22 @@ class _AcademicPageState extends State<AcademicPage> {
                 ),
               ),
             ),
-
-            /// Subject list
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: subjects.map((s) => _subjectTile(s)).toList(),
-                ),
-              ),
+              child: _subjects.isEmpty
+                  ? Center(
+                      child: Text(
+                        "$_selectedExamName data not available",
+                        style: const TextStyle(
+                          color: mutedText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: _subjects.map(_subjectTile).toList(),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -200,9 +411,12 @@ class _AcademicPageState extends State<AcademicPage> {
     );
   }
 
-  // ---------------- SUBJECT TILE ----------------
+  Widget _subjectTile(Map<String, dynamic> s) {
+    final subject = s['subject'].toString();
+    final total = s['max_marks'];
+    final obtained = s['secured_marks'];
+    final pct = s['percentage'];
 
-  Widget _subjectTile(dynamic s) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -213,13 +427,12 @@ class _AcademicPageState extends State<AcademicPage> {
       ),
       child: Row(
         children: [
-          /// LEFT CONTENT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  s['subject'],
+                  subject,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -229,16 +442,14 @@ class _AcademicPageState extends State<AcademicPage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _miniChip("Max ${s['totalMarks']}"),
+                    _miniChip("Max $total"),
                     const SizedBox(width: 8),
-                    _miniChip("Secured ${s['obtainedMarks']}"),
+                    _miniChip("Secured $obtained"),
                   ],
                 ),
               ],
             ),
           ),
-
-          /// PERCENTAGE PILL
           Container(
             width: 56,
             height: 36,
@@ -249,7 +460,7 @@ class _AcademicPageState extends State<AcademicPage> {
               border: Border.all(color: subjectBorder),
             ),
             child: Text(
-              "${s['percentage']}%",
+              "$pct%",
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -261,8 +472,6 @@ class _AcademicPageState extends State<AcademicPage> {
       ),
     );
   }
-
-  // ---------------- MINI CHIP ----------------
 
   Widget _miniChip(String text) {
     return Container(

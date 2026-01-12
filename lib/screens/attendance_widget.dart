@@ -1,16 +1,30 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
+
 
 class AttendancePage extends StatefulWidget {
-  const AttendancePage({super.key});
+  /// initial month data (current month ideally)
+  final Map<String, dynamic> apiResponse;
+
+  /// ✅ Pass your fetch function from service
+  /// Example:
+  /// (month, year) => attendanceService.fetchYearWiseAttendance(..., month: month, year: year)
+  final Future<Map<String, dynamic>> Function(String month, int year)
+  fetchAttendance;
+
+  const AttendancePage({
+    super.key,
+    required this.apiResponse,
+    required this.fetchAttendance,
+  });
 
   @override
   State<AttendancePage> createState() => _AttendancePageState();
 }
 
 class _AttendancePageState extends State<AttendancePage> {
-  // ---------------- COLORS (MATCH SS) ----------------
-  static const Color pageBg = Color(0xFFF6F7FB);
+  // ---------------- COLORS ----------------
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBg = Colors.white;
 
   static const Color presentColor = Color(0xFF46B670);
@@ -23,66 +37,181 @@ class _AttendancePageState extends State<AttendancePage> {
   static const Color borderColor = Color(0xFFE6EEF6);
   // --------------------------------------------------
 
-  // ---------------- SAMPLE JSON (API READY) ----------------
-  final String sampleJsonData = '''
-  {
-    "attendancePercent": "92%",
-    "presentDays": 178,
-    "totalDays": 194,
-    "holidays": [
-      {"date": "2024-11-01", "title": "Karnataka Rajyotsava"},
-      {"date": "2024-11-01", "title": "Gandhi Jayanthi"},
-      {"date": "2024-11-16", "title": "School Holiday"}
-    ],
-    "days": {
-      "2024-11-02": "present",
-      "2024-11-03": "present",
-      "2024-11-04": "present",
-      "2024-11-05": "present",
-      "2024-11-06": "absent",
-      "2024-11-07": "present",
-      "2024-11-08": "present",
-      "2024-11-09": "halfday",
-      "2024-11-16": "holiday",
-      "2024-11-27": "absent"
-    }
-  }
-  ''';
+   Map<String, dynamic> _attendance = {};
 
-  late final Map<String, dynamic> _data;
-  DateTime _focusedDay = DateTime(2024, 11, 1);
+  static const List<String> _months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  int _monthIndex(String monthName) {
+    final idx = _months.indexWhere(
+      (m) => m.toLowerCase() == monthName.trim().toLowerCase(),
+    );
+    return idx == -1 ? 1 : (idx + 1); // 1..12
+  }
+
+  DateTime _focusedDay = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _currentLimit = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
+
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _data = json.decode(sampleJsonData);
+    _attendance = _mapApiToUi(widget.apiResponse);
+    _initAyLimit();
   }
 
+  Future<void> _initAyLimit() async {
+    final ayStatus =
+        (await InvoiceStorage.getAyStatus())?.toString() ?? "ongoing";
+
+    final now = DateTime.now();
+    DateTime limit = DateTime(now.year, now.month, 1);
+
+    if (ayStatus != "ongoing") {
+      final endMonthName = await InvoiceStorage.getAyEndMonth();
+      final endYear = await InvoiceStorage.getAyEndYear();
+
+      if (endMonthName != null && endYear != null) {
+        final endMonth = _monthIndex(endMonthName);
+        limit = DateTime(endYear, endMonth, 1);
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _currentLimit = limit;
+      _focusedDay = limit;
+    });
+
+    // ✅ Fetch correct month
+    await _fetchAndApply(_focusedDay);
+  }
+
+  // ---------------- CORE TRANSFORM ----------------
+  Map<String, dynamic> _mapApiToUi(Map<String, dynamic> api) {
+    final List<dynamic> list = api['data'] ?? [];
+
+    final Map<String, String> daysMap = {};
+    double presentCount = 0;
+
+    for (final d in list) {
+      final String date = d['date'];
+
+      final String firstHalf = (d['first_half'] ?? '').toLowerCase();
+      final String secondHalf = (d['second_half'] ?? '').toLowerCase();
+
+      String finalStatus = 'absent';
+
+      if (firstHalf == 'present' && secondHalf == 'present') {
+        finalStatus = 'present';
+        presentCount += 1;
+      } else if ((firstHalf == 'present' && secondHalf == 'absent') ||
+          (firstHalf == 'absent' && secondHalf == 'present')) {
+        finalStatus = 'halfday';
+        presentCount += 0.5;
+      } else if (firstHalf == 'absent' && secondHalf == 'absent') {
+        finalStatus = 'absent';
+      }
+
+      daysMap[date] = finalStatus;
+    }
+
+    final int totalDays = list.length;
+    final String percent = totalDays == 0
+        ? "0%"
+        : "${((presentCount / totalDays) * 100).round()}%";
+
+    return {
+      "attendancePercent": percent,
+      "presentDays": presentCount,
+      "totalDays": totalDays,
+      "holidays": api['holidays'] ?? [],
+      "days": daysMap,
+    };
+  }
+
+  // ---------------- HELPERS ----------------
   String _dateKey(DateTime d) =>
       "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
+  String _monthName(int month) => _months[month - 1];
+
   String? _statusFor(DateTime d) {
-    final days = _data['days'] as Map<String, dynamic>? ?? {};
-    return days[_dateKey(d)];
+    final String key = _dateKey(d);
+    final String? status = _attendance['days'][key];
+
+    final holidays = _attendance['holidays'];
+    if (status == null && holidays is List) {
+      if (holidays.contains(key)) return 'holiday';
+    }
+    return status;
   }
 
-  String _monthName(int month) {
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    return months[month - 1];
+  // ✅ "Future" = beyond limit (current month if ongoing, else AY end month)
+  bool _isFutureMonth(DateTime monthStart) {
+    return monthStart.isAfter(_currentLimit);
   }
+
+  Future<void> _fetchAndApply(DateTime monthStart) async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final monthStr = _monthName(monthStart.month);
+      final year = monthStart.year;
+
+      final res = await widget.fetchAttendance(monthStr, year);
+
+      if (!mounted) return;
+
+      setState(() {
+        _focusedDay = monthStart;
+        _attendance = _mapApiToUi(res);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to load attendance: $e")));
+    }
+  }
+
+  void _goPrev() {
+    final prev = DateTime(_focusedDay.year, _focusedDay.month - 1, 1);
+    _fetchAndApply(prev);
+  }
+
+  void _goNext() {
+    final next = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+
+    // ✅ block beyond limit
+    if (_isFutureMonth(next)) return;
+
+    _fetchAndApply(next);
+  }
+
 
   // ---------------- BUILD ----------------
 
@@ -92,41 +221,8 @@ class _AttendancePageState extends State<AttendancePage> {
       backgroundColor: pageBg,
       body: Column(
         children: [
-          // ---------- HEADER ----------
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(8,8,8,8),
-            margin: const EdgeInsets.only(top: 20),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, color: Colors.black87),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Attendance",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
-
-          // ---------- GAP BELOW HEADER ----------
-          Container(height: 14, color: pageBg),
-
-          // ---------- CONTENT ----------
+          _header(),
+          const SizedBox(height: 14),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -134,7 +230,7 @@ class _AttendancePageState extends State<AttendancePage> {
                 children: [
                   _overallAttendanceCard(),
                   const SizedBox(height: 16),
-                  _calendarCombinedCard(),
+                  _calendarCard(),
                   const SizedBox(height: 20),
                 ],
               ),
@@ -145,12 +241,42 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
-  // ---------------- OVERALL ATTENDANCE CARD ----------------
+  // ---------------- HEADER ----------------
+
+  Widget _header() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
+      margin: const EdgeInsets.only(top: 20),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  "Attendance",
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            const SizedBox(width: 48),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------- OVERALL CARD ----------------
 
   Widget _overallAttendanceCard() {
-    final int present = _data['presentDays'];
-    final int total = _data['totalDays'];
-    final double progress = present / total;
+    final double present = _attendance['presentDays'];
+    final int total = _attendance['totalDays'];
+    final double progress = total == 0 ? 0 : present / total;
 
     return Container(
       width: double.infinity,
@@ -190,27 +316,18 @@ class _AttendancePageState extends State<AttendancePage> {
                   color: const Color(0xFFE6F0FA),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  "92%",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Text(
+                  _attendance['attendancePercent'],
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
-              Row(
-                children: [
-                  const CircleAvatar(radius: 3, backgroundColor: primaryBlue),
-                  const SizedBox(width: 8),
-                  Text(
-                    "$present / $total days",
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+              Text(
+                "${present % 1 == 0 ? present.toInt() : present} / $total days",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -219,34 +336,53 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
-  // ---------------- CALENDAR CARD ----------------
+  // ---------------- CALENDAR ----------------
 
-  Widget _calendarCombinedCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _calendarHeader(),
-          const SizedBox(height: 14),
-          _weekDays(),
-          const SizedBox(height: 8),
-          _calendarGrid(),
-          const SizedBox(height: 16),
-          _legendRow(),
-          const SizedBox(height: 16),
-          _holidayList(),
-        ],
-      ),
+  Widget _calendarCard() {
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            children: [
+              _calendarHeader(),
+              const SizedBox(height: 14),
+              _weekDays(),
+              const SizedBox(height: 8),
+              _calendarGrid(),
+              const SizedBox(height: 16),
+              _legendRow(),
+            ],
+          ),
+        ),
+
+        // ✅ Loading overlay
+        if (_isLoading)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.65),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _calendarHeader() {
+    final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
+final bool nextDisabled = _isFutureMonth(nextMonth) || _isLoading;
+
+
+    final bool prevDisabled = _isLoading;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -256,32 +392,24 @@ class _AttendancePageState extends State<AttendancePage> {
         ),
         Row(
           children: [
-            _navBtn(Icons.chevron_left, () {
-              setState(() {
-                _focusedDay = DateTime(
-                  _focusedDay.year,
-                  _focusedDay.month - 1,
-                  1,
-                );
-              });
-            }),
+            _navBtn(
+              Icons.chevron_left,
+              prevDisabled ? null : _goPrev,
+              disabled: prevDisabled,
+            ),
             const SizedBox(width: 8),
-            _navBtn(Icons.chevron_right, () {
-              setState(() {
-                _focusedDay = DateTime(
-                  _focusedDay.year,
-                  _focusedDay.month + 1,
-                  1,
-                );
-              });
-            }),
+            _navBtn(
+              Icons.chevron_right,
+              nextDisabled ? null : _goNext,
+              disabled: nextDisabled,
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _navBtn(IconData icon, VoidCallback onTap) {
+  Widget _navBtn(IconData icon, VoidCallback? onTap, {bool disabled = false}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
@@ -291,8 +419,13 @@ class _AttendancePageState extends State<AttendancePage> {
         decoration: BoxDecoration(
           border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(30),
+          color: disabled ? const Color(0xFFF3F6FA) : Colors.white,
         ),
-        child: Icon(icon, size: 18),
+        child: Icon(
+          icon,
+          size: 18,
+          color: disabled ? Colors.black26 : Colors.black87,
+        ),
       ),
     );
   }
@@ -435,68 +568,4 @@ class _AttendancePageState extends State<AttendancePage> {
       ],
     );
   }
-
-  // ---------------- HOLIDAYS ----------------
-
-  Widget _holidayList() {
-    final holidays = _data['holidays'] as List<dynamic>? ?? [];
-
-    return Column(
-      children: holidays.map((h) {
-        final DateTime date = DateTime.parse(h['date']);
-        final String title = h['title'];
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F3FF),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              /// 🔹 PNG ICON CONTAINER
-              Container(
-                width: 32,
-                height: 32,
-                padding: const EdgeInsets.all(6),
-                
-                child: Image.asset(
-                  'assets/icon/calendar.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              /// Date text
-              Text(
-                "Nov ${date.day}",
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-
-              const SizedBox(width: 14),
-
-              /// Title
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
 }

@@ -1,8 +1,9 @@
-// lib/screens/student_details_page.dart
 import 'package:flutter/material.dart';
 
 class StudentDetailsPage extends StatefulWidget {
-  const StudentDetailsPage({super.key});
+  final Map<String, dynamic> studentData;
+
+  const StudentDetailsPage({super.key, required this.studentData});
 
   @override
   State<StudentDetailsPage> createState() => _StudentDetailsPageState();
@@ -11,255 +12,251 @@ class StudentDetailsPage extends StatefulWidget {
 class _StudentDetailsPageState extends State<StudentDetailsPage> {
   int _selectedSegment = 0; // 0=Student,1=Mother,2=Father
 
-  // Colors tuned to match screenshots
-  static const Color _pageBg = Color(0xFFF5F8FB);
-  static const Color _cardBorder = Color(0xFFE7EFF7);
-  static const Color _titleBlue = Color(0xFF244A6A);
-  static const Color _accentBlue = Color(0xFF2E9EE6);
-  static const Color _muted = Color(0xFF9FA8B2);
+  // Colors
+  static const Color pageBg = Color(0xFFF6FAFF);
+  static const Color cardBorder = Color(0xFFE6EEF6);
+  static const Color muted = Color(0xFF9FA8B2);
 
-  // Sample grouped data for each segment
-  final Map<String, Map<String, String>> _people = {
-    'student': {
-      'firstName': 'Array ',
-      'middleName': '',
-      'lastName': 'Sharma',
-      'dateOfBirth': 'Oct 18, 2005',
-      'bloodGroup': 'A+',
-      'gender': 'Male',
-      'admissionDate': 'Jun 01, 2025',
-      'email': 'neha@example.com',
-      'mobile': '849 373 7373',
-      'pan': 'DSGHB3456H',
-      'aadhaar': '—',
-    },
-    'mother': {
-      'firstName': 'Neha ',
-      'middleName': '',
-      'lastName': 'Shamani',
-      'email': 'neha@example.com',
-      'mobile': '849 474 7474',
-      'pan': 'DSGHB6789H',
-      'aadhaar': '—',
-    },
-    'father': {
-      'firstName': 'Abhi ',
-      'middleName': '',
-      'lastName': 'Sharma',
-      'email': 'abhi@example.com',
-      'mobile': '849 373 7373',
-      'pan': 'DSGHB3456H',
-      'aadhaar': '—',
-    },
-  };
+  // ================= API DATA =================
+
+  Map<String, dynamic> get student => widget.studentData['data'] ?? {};
+
+  Map<String, dynamic> get mother => student['is_mother_details'] == true
+      ? (student['mother_details'] ?? {})
+      : {};
+
+  Map<String, dynamic> get father => student['is_father_details'] == true
+      ? (student['father_details'] ?? {})
+      : {};
+
+  String _fmtDate(String? iso) {
+    if (iso == null || iso.isEmpty) return '-';
+    try {
+      final d = DateTime.parse(iso);
+      return "${d.day.toString().padLeft(2, '0')} "
+          "${_month(d.month)} ${d.year}";
+    } catch (_) {
+      return '-';
+    }
+  }
+
+  String _month(int m) => const [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ][m - 1];
 
   @override
   Widget build(BuildContext context) {
-    final currentKey = _selectedSegment == 0
-        ? 'student'
-        : (_selectedSegment == 1 ? 'mother' : 'father');
-    final data = _people[currentKey]!;
-
     return Scaffold(
-      backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Student Details',
-          style: TextStyle(
-            color: _titleBlue,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          child: Column(
-            children: [
-              // Avatar / name / id card
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _cardBorder),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: _cardBorder),
-                      ),
-                      child: ClipOval(
-                        child: Image.network(
-                          'https://i.pravatar.cc/150?img=47',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.person, color: _titleBlue),
+      backgroundColor: pageBg,
+      body: Column(
+        children: [
+          const SizedBox(height: 20),
+
+          /// 🔹 HEADER
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        "Student Details",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Aaraya Sharma',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: _titleBlue,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'ID 1254',
-                            style: TextStyle(fontSize: 12, color: _muted),
-                          ),
-                        ],
-                      ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
+          ),
+
+          Container(height: 14, color: pageBg),
+
+          /// 🔹 CONTENT
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  /// ================= PROFILE CARD =================
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: cardBorder),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Segmented control
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    _segmentButton('Student', 0),
-                    _segmentButton('Mother', 1),
-                    _segmentButton('Father', 2),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Content area (scrollable)
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      // Details card (title depends on selected segment)
-                      _detailsCard(
-                        title: _selectedSegment == 0
-                            ? 'Basic Information'
-                            : (_selectedSegment == 1
-                                  ? 'Mother Details'
-                                  : 'Father Details'),
-                        children: _selectedSegment == 0
-                            ? [
-                                _fieldRow(
-                                  'First Name',
-                                  data['firstName'] ?? '',
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage:
+                              (student['image_url'] ?? '').isNotEmpty
+                              ? NetworkImage(student['image_url'])
+                              : null,
+                          child: (student['image_url'] ?? '').isEmpty
+                              ? const Icon(Icons.person, color: Colors.black54)
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                student['full_name'] ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                _fieldRow(
-                                  'Middle Name',
-                                  data['middleName'] ?? '',
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "ID ${student['student_id'] ?? '-'}",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: muted,
                                 ),
-                                _fieldRow('Last Name', data['lastName'] ?? ''),
-                                _fieldRow(
-                                  'Date of Birth',
-                                  data['dateOfBirth'] ?? '',
-                                ),
-                                _fieldRow(
-                                  'Blood Group',
-                                  data['bloodGroup'] ?? '',
-                                ),
-                                _fieldRow('Gender', data['gender'] ?? ''),
-                              ]
-                            : [
-                                _fieldRow(
-                                  'First Name',
-                                  data['firstName'] ?? '',
-                                ),
-                                _fieldRow(
-                                  'Middle Name',
-                                  data['middleName'] ?? '',
-                                ),
-                                _fieldRow('Last Name', data['lastName'] ?? ''),
-                                _fieldRow('Email Address', data['email'] ?? ''),
-                                _fieldRow(
-                                  'Mobile Number',
-                                  data['mobile'] ?? '',
-                                ),
-                                _fieldRow('PAN', data['pan'] ?? ''),
-                                _fieldRow('Aadhaar No.', data['aadhaar'] ?? ''),
-                              ],
-                      ),
-
-                      // If Student, show Enrollment card below
-                      if (_selectedSegment == 0) ...[
-                        const SizedBox(height: 12),
-                        _detailsCard(
-                          title: 'Enrollment',
-                          children: [
-                            _fieldRow(
-                              'Date of Admission',
-                              data['admissionDate'] ?? '',
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
-                ),
+
+                  const SizedBox(height: 20),
+
+                  /// ================= SEGMENTS =================
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        _segment("Student", 0, enabled: true),
+                        _segment(
+                          "Mother",
+                          1,
+                          enabled: student['is_mother_details'] == true,
+                        ),
+                        _segment(
+                          "Father",
+                          2,
+                          enabled: student['is_father_details'] == true,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// ================= DETAILS =================
+                  _detailsCard(
+                    title: _selectedSegment == 0
+                        ? 'Basic Information'
+                        : _selectedSegment == 1
+                        ? 'Mother Details'
+                        : 'Father Details',
+                    children: _selectedSegment == 0
+                        ? _studentFields()
+                        : _selectedSegment == 1
+                        ? _parentFields(mother)
+                        : _parentFields(father),
+                  ),
+
+                  if (_selectedSegment == 0) ...[
+                    const SizedBox(height: 14),
+                    _detailsCard(
+                      title: "Enrollment",
+                      children: [
+                        _field(
+                          "Date of Admission",
+                          _fmtDate(student['date_of_admission']),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  // Segment button builder
-  Widget _segmentButton(String label, int index) {
-    final bool selected = _selectedSegment == index;
+  // ================= FIELD BUILDERS =================
+
+  List<Widget> _studentFields() => [
+    _field("First Name", student['first_name']),
+    _field("Middle Name", student['middle_name']),
+    _field("Last Name", student['last_name']),
+    _field("Date of Birth", _fmtDate(student['date_of_birth'])),
+    _field("Blood Group", student['blood_group']),
+    _field("Gender", student['gender']),
+  ];
+
+  List<Widget> _parentFields(Map<String, dynamic> p) {
+    if (p.isEmpty) {
+      return [_field("Info", "No details available")];
+    }
+
+    return [
+      _field("First Name", p['first_name']),
+      _field("Middle Name", p['middle_name']),
+      _field("Last Name", p['last_name']),
+      _field("Email Address", p['email_address']),
+      _field("Mobile Number", p['mobile_number']),
+      _field("PAN", p['pan_number']),
+      _field("Aadhaar No.", p['aadhar_number']?['number']),
+    ];
+  }
+
+  // ================= UI HELPERS =================
+
+  Widget _segment(String label, int index, {bool enabled = true}) {
+    final selected = _selectedSegment == index;
+
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _selectedSegment = index),
+        onTap: enabled ? () => setState(() => _selectedSegment = index) : null,
         borderRadius: BorderRadius.circular(10),
-        child: Container(
-          height: 44,
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFF0F7FF) : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _cardBorder),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: selected ? _titleBlue : Colors.black54,
+        child: Opacity(
+          opacity: enabled ? 1 : 0.4,
+          child: Container(
+            height: 42,
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFFF0F7FF) : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: cardBorder),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: selected ? Colors.black : Colors.black54,
+              ),
             ),
           ),
         ),
@@ -267,15 +264,14 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     );
   }
 
-  // Generic details card used for Basic / Mother / Father / Enrollment
   Widget _detailsCard({required String title, required List<Widget> children}) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,29 +280,22 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
             padding: const EdgeInsets.only(left: 6, bottom: 8),
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: _titleBlue,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
-          const SizedBox(height: 4),
           ...children,
         ],
       ),
     );
   }
 
-  // Pill-like label/value row
-  Widget _fieldRow(String label, String value) {
+  Widget _field(String label, String? value) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _cardBorder),
+        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -316,18 +305,13 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
               style: const TextStyle(
                 fontSize: 13,
                 color: Colors.black54,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          const SizedBox(width: 8),
           Text(
-            value.isNotEmpty ? value : '-',
-            style: const TextStyle(
-              fontSize: 13,
-              color: _titleBlue,
-              fontWeight: FontWeight.w800,
-            ),
+            (value != null && value.isNotEmpty) ? value : '-',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
           ),
         ],
       ),

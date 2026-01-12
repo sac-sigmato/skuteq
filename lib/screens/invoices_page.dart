@@ -1,242 +1,319 @@
-// lib/screens/invoices_page.dart
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/services/invoice_service.dart';
 import 'dart:math' as math;
-import 'invoice_details_page.dart'; // ensure correct relative path
+import '../helpers/invoice_storage.dart';
+import 'invoice_details_page.dart';
 
 class InvoicesPage extends StatefulWidget {
-  const InvoicesPage({super.key});
+  final List<dynamic> invoices;
+
+  const InvoicesPage({super.key, required this.invoices});
 
   @override
   State<InvoicesPage> createState() => _InvoicesPageState();
 }
 
-class _InvoicesPageState extends State<InvoicesPage> {
-  int _selectedTab = 0; // 0 = Outstanding, 1 = Paid
+class _InvoicesPageState extends State<InvoicesPage>
+    with SingleTickerProviderStateMixin {
+  int _selectedTab = 0;
+  late AnimationController _controller;
+  Animation<double> _pillAnimation = const AlwaysStoppedAnimation(3.0);
 
-  static const Color _bg = Color(0xFFF5F8FB);
-  static const Color _cardBorder = Color(0xFFE7EFF7);
-  static const Color _titleBlue = Color(0xFF244A6A);
-  static const Color _pillBg = Color(0xFFEFF7FF);
-  static const Color _muted = Color(0xFF9FA8B2);
+  double _pillLeft = 3.0; // 🔥 remembers last position
 
-  // sample lists (replace with your backend data)
-  final List<Map<String, dynamic>> _outstanding = [
-    {
-      'title': 'Activity Fee - Q3',
-      'invoice': 'INV-2098',
-      'amount': '₹ 900',
-      'status': 'Unpaid',
-      // you can include items/payments here to send to details page immediately
-      'items': [
-        {'item': 'Activity Fee', 'qty': 1, 'charge': 900, 'total': 900},
-      ],
-    },
-    {
-      'title': 'Library Fine',
-      'invoice': 'INV-2103',
-      'amount': '₹ 150',
-      'status': 'Partially paid',
-      'items': [
-        {'item': 'Fine', 'qty': 1, 'charge': 150, 'total': 150},
-      ],
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+  
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
 
-  final List<Map<String, dynamic>> _paid = [
-    {
-      'title': 'Tuition Fee - Q2',
-      'invoice': 'INV-2060',
-      'amount': '₹ 12,000',
-      'status': 'Paid',
-      'items': [
-        {'item': 'Tuition', 'qty': 1, 'charge': 12000, 'total': 12000},
-      ],
-      'payments': [
-        {'receipt': 'RCT-1001', 'date': '05 Sep 2025', 'amount': 12000},
-      ],
-    },
-    {
-      'title': 'Transport Fee - May',
-      'invoice': 'INV-2074',
-      'amount': '₹ 1,200',
-      'status': 'Paid',
-      'items': [
-        {'item': 'Transport', 'qty': 1, 'charge': 1200, 'total': 1200},
-      ],
-      'payments': [
-        {'receipt': 'RCT-1002', 'date': '10 May 2025', 'amount': 1200},
-      ],
-    },
-  ];
+    _pillAnimation = AlwaysStoppedAnimation(_pillLeft);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // ---------------- COLORS ----------------
+  static const Color bg = Color(0xFFF6FAFF);
+  static const Color cardBorder = Color(0xFFE6EEF6);
+  static const Color titleBlue = Color(0xFF244A6A);
+  static const Color pillBg = Color(0xFFEFF7FF);
+  static const Color muted = Color(0xFF9FA8B2);
+
+  // ================= DATA =================
+
+  List<Map<String, dynamic>> get _outstanding => widget.invoices
+      .where((e) => (e['status'] ?? '').toString().toLowerCase() != 'paid')
+      .map((e) => Map<String, dynamic>.from(e))
+      .toList();
+
+  List<Map<String, dynamic>> get _paid => widget.invoices
+      .where((e) => (e['status'] ?? '').toString().toLowerCase() == 'paid')
+      .map((e) => Map<String, dynamic>.from(e))
+      .toList();
 
   double _parseAmount(dynamic raw) {
-    if (raw == null) return 0.0;
     if (raw is num) return raw.toDouble();
     if (raw is String) {
-      final cleaned = raw.replaceAll(RegExp(r'[^\d.]'), '');
-      return double.tryParse(cleaned) ?? 0.0;
+      return double.tryParse(raw.replaceAll(RegExp(r'[^\d.]'), '')) ?? 0;
     }
-    return 0.0;
+    return 0;
   }
 
   String _formatAmount(dynamic raw) {
-    final val = _parseAmount(raw);
-    if (val % 1 == 0) return '₹ ${val.toInt()}';
-    return '₹ ${val.toStringAsFixed(2)}';
+    final v = _parseAmount(raw);
+    return '₹ ${v.toStringAsFixed(0)}';
   }
 
   double get _outstandingTotal {
     double total = 0;
     for (var it in _outstanding) {
-      total += _parseAmount(it['amount']);
+      total += _parseAmount(it['due_amount']);
     }
     return total;
   }
 
-  /// robust id extractor (keeps compatibility with different backends)
-  String _getInvoiceId(Map<String, dynamic> item) {
-    final candidates = [
-      item['invoice'],
-      item['invoiceNo'],
-      item['invoice_number'],
-      item['id'],
-      item['invoice_id'],
-    ];
-    for (var c in candidates) {
-      if (c == null) continue;
-      final s = c.toString().trim();
-      if (s.isNotEmpty) return s;
+  String _getInvoiceId(Map<String, dynamic> item) =>
+      item['invoice_number'] ?? '-';
+
+  String _getTitle(Map<String, dynamic> item) =>
+      item['invoice_name'] ?? 'Invoice';
+
+  void _onInvoiceTap(Map<String, dynamic> item) async {
+    try {
+      final invoiceHeaderId = item['invoice_header_id'];
+
+      if (invoiceHeaderId == null) {
+        throw Exception("Invoice header id missing");
+      }
+      InvoiceStorage.saveInvoiceHeaderId(invoiceHeaderId);
+      final invoiceService = InvoiceService();
+
+      // 🔄 SHOW LOADER
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final invoiceDetailsResponse = await invoiceService.fetchInvoiceDetails(
+        invoiceHeaderId: invoiceHeaderId.toString(),
+      );
+
+      // ❌ CLOSE LOADER
+      Navigator.pop(context);
+
+      // ➡️ NAVIGATE WITH FULL API RESPONSE
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              InvoiceDetailsPage(apiResponse: invoiceDetailsResponse),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      debugPrint("❌ Invoice details error: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load invoice details")),
+      );
     }
-    return '';
   }
 
-  void _onInvoiceTap(Map<String, dynamic> item) {
-    // Always navigate and pass full item map to details page
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => InvoiceDetailsPage(invoiceData: item)),
+  Widget _animatedToggle() {
+    final totalWidth = MediaQuery.of(context).size.width - 32;
+    final pillWidth = (totalWidth - 6) / 2;
+
+    return Container(
+      height: 44,
+      width: totalWidth,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _pillAnimation,
+            builder: (_, __) {
+              return Positioned(
+                left: _pillAnimation.value,
+                top: 3,
+                child: Container(
+                  width: pillWidth,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF7FF),
+                    borderRadius: BorderRadius.circular(19),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          Row(
+            children: [
+              _toggleItem("Outstanding", 0, pillWidth),
+              _toggleItem("Paid", 1, pillWidth),
+            ],
+          ),
+        ],
+      ),
     );
   }
+
+  Widget _toggleItem(String title, int index, double pillWidth) {
+    final active = _selectedTab == index;
+
+    return SizedBox(
+      width: pillWidth,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (_selectedTab == index) return;
+
+          // 🔥 CALCULATE FROM & TO EXPLICITLY
+          final double fromLeft = _selectedTab == 0 ? 3.0 : pillWidth + 3;
+          final double toLeft = index == 0 ? 3.0 : pillWidth + 3;
+
+          _pillAnimation = Tween<double>(begin: fromLeft, end: toLeft).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+          );
+
+          // 🚀 START ANIMATION FIRST
+          _controller.forward(from: 0);
+
+          // 🔁 UPDATE STATE AFTER
+          setState(() {
+            _selectedTab = index;
+            _pillLeft = toLeft; // persist
+          });
+        },
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: active ? const Color(0xFF244A6A) : Colors.black45,
+            ),
+            child: Text(title),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ================= BUILD =================
 
   @override
   Widget build(BuildContext context) {
     final items = _selectedTab == 0 ? _outstanding : _paid;
 
     return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'Invoices',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+      backgroundColor: bg,
+      body: Column(
+        children: [
+          // 🔹 HEADER
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
+            margin: const EdgeInsets.only(top: 20),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Expanded(
+                    child: Center(
+                      child: Text(
+                        "Invoices",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+            ),
           ),
-        ),
+
+          Container(height: 14, color: bg),
+
+          // 🔹 TABS
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _animatedToggle(),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 🔹 LIST
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: items.isEmpty
+                  ? const Center(child: Text("No invoices found"))
+                  : ListView.separated(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      itemCount: items.length + (_selectedTab == 0 ? 1 : 0),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        if (_selectedTab == 0 && index == items.length) {
+                          return _totalFooter();
+                        }
+                        final item = items[index];
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _onInvoiceTap(item),
+                          child: _invoiceCard(item),
+                        );
+                      },
+                    ),
+            ),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
+    );
+  }
 
-            // pill tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: _cardBorder),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedTab = 0),
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: _selectedTab == 0
-                                ? _pillBg
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Outstanding',
-                            style: TextStyle(
-                              color: _selectedTab == 0
-                                  ? Colors.black87
-                                  : Colors.black45,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedTab = 1),
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: _selectedTab == 1
-                                ? _pillBg
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Paid',
-                            style: TextStyle(
-                              color: _selectedTab == 1
-                                  ? Colors.black87
-                                  : Colors.black45,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+  // ================= WIDGETS =================
+
+  Widget _pillTab(String title, int index) {
+    final active = _selectedTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTab = index),
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: active ? pillBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: active ? Colors.black87 : Colors.black45,
             ),
-
-            const SizedBox(height: 12),
-
-            // list (footer included inside list when Outstanding selected)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(top: 6, bottom: 16),
-                  itemCount: items.length + (_selectedTab == 0 ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    if (_selectedTab == 0 && index == items.length)
-                      return _totalFooter();
-                    final item = items[index];
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _onInvoiceTap(item),
-                      child: _invoiceCard(item),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-          ],
+          ),
         ),
       ),
     );
@@ -247,19 +324,15 @@ class _InvoicesPageState extends State<InvoicesPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
           const Expanded(
             child: Text(
-              'Total outstanding amount',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-                fontWeight: FontWeight.w600,
-              ),
+              "Total outstanding amount",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
           Text(
@@ -272,62 +345,43 @@ class _InvoicesPageState extends State<InvoicesPage> {
   }
 
   Widget _invoiceCard(Map<String, dynamic> item) {
-    final status = (item['status'] ?? item['payment_status'] ?? '').toString();
-    Color badgeBg;
-    Color badgeTextColor = Colors.white;
+    final status = (item['status'] ?? '').toString().toLowerCase();
 
-    if (status.toLowerCase() == 'paid') {
+    Color badgeBg;
+    Color badgeText = Colors.white;
+
+    if (status == 'paid') {
       badgeBg = const Color(0xFF2ECC71);
-    } else if (status.toLowerCase().contains('part')) {
-      badgeBg = const Color(0xFFF1C40F);
-      badgeTextColor = Colors.black87;
+    } else if (status.contains('part')) {
+      badgeBg = const Color(0xFFFFD54F);
+      badgeText = Colors.black;
     } else {
       badgeBg = const Color(0xFFF39C12);
+      badgeText = Colors.black;
     }
 
-    final leftIconAsset = (status.toLowerCase() == 'paid')
+    final iconAsset = status == 'paid'
         ? 'assets/images/paid.png'
         : 'assets/images/unpaid.png';
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.01),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
-          Container(
+          SizedBox(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF7FF),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _cardBorder),
-            ),
-            child: Center(
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.rotationZ(-math.pi / 30),
-                child: Image.asset(
-                  leftIconAsset,
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.contain,
-                  errorBuilder: (ctx, err, st) => const Icon(
-                    Icons.receipt_long,
-                    color: Color(0xFF2B6F9E),
-                    size: 20,
-                  ),
-                ),
+            child: Transform.rotate(
+              angle: -math.pi / 180,
+              child: Image.asset(
+                iconAsset,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(Icons.receipt_long),
               ),
             ),
           ),
@@ -337,21 +391,17 @@ class _InvoicesPageState extends State<InvoicesPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['title'] ?? item['name'] ?? '',
+                  _getTitle(item),
                   style: const TextStyle(
-                    color: _titleBlue,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
+                    color: titleBlue,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Invoice #${_getInvoiceId(item)}',
-                  style: const TextStyle(
-                    color: Color(0xFF9FA8B2),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  "Invoice #${_getInvoiceId(item)}",
+                  style: const TextStyle(fontSize: 12, color: muted),
                 ),
               ],
             ),
@@ -360,14 +410,8 @@ class _InvoicesPageState extends State<InvoicesPage> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                _formatAmount(
-                  item['amount'] ??
-                      item['invoice_total'] ??
-                      item['invoice_amount'] ??
-                      0,
-                ),
+                _formatAmount(item['invoice_total']),
                 style: const TextStyle(
-                  color: Colors.black87,
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                 ),
@@ -380,11 +424,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  item['status'] ?? status ?? '',
+                  item['status'],
                   style: TextStyle(
-                    color: badgeTextColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
+                    color: badgeText,
                   ),
                 ),
               ),

@@ -1,4 +1,3 @@
-// lib/screens/profile_page.dart
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -30,18 +29,189 @@ class ProfilePage extends StatelessWidget {
     },
   ];
 
-  // UI colors (match previous screens)
-  static const Color _pageBg = Color(0xFFF5F8FB);
+  // UI colors
+  static const Color _pageBg = Color(0xFFF6FAFF);
+  static const Color _headerBg = Color(0xFFEAF4FF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
   static const Color _titleBlue = Color(0xFF244A6A);
-  static const Color _muted = Color(0xFF9FA8B2);
+  static const Color _muted = Color(0xFF7A8AAA);
 
-  Widget _fieldRow(String label, String value) {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _pageBg,
+      body: Column(
+        children: [
+          Container(height: 20),
+          /// 🔹 HEADER INSIDE BODY (MATCH SS)
+          Container(
+            color: Colors.white,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, color: Colors.black87),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const Spacer(),
+                    const Text(
+                      'My Profile',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const Spacer(),
+                    const SizedBox(width: 48), // balance back button
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          /// 🔹 GAP BELOW HEADER (VISIBLE IN SS)
+          Container(height: 14),
+
+          /// 🔹 PAGE CONTENT
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                children: [
+                  /// Profile summary card
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: _cardBorder),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _cardBorder),
+                          ),
+                          child: ClipOval(
+                            child: Image.network(
+                              'https://i.pravatar.cc/150?img=12',
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.person, color: _titleBlue),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _profile['name']!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: _titleBlue,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _profile['subtitle']!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: _muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  /// Profile fields
+                  _card(
+                    children: [
+                      _field('First Name', _profile['firstName']!),
+                      _field('Middle Name', _profile['middleName']!),
+                      _field('Last Name', _profile['lastName']!),
+                      _field('Email Address', _profile['email']!),
+                      _field('Mobile Number', _profile['mobile']!),
+                      _field('PAN', _profile['pan']!),
+                      _field('Aadhaar No.', _profile['aadhaar']!),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  /// Linked children
+                  _card(
+                    title: 'Linked children',
+                    children: _children
+                        .map((c) => _childTile(context, c))
+                        .toList(),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🔹 Reusable Card
+  Widget _card({String? title, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 4, bottom: 8),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  /// 🔹 Field row
+  Widget _field(String label, String value) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBFF),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _cardBorder),
       ),
@@ -52,17 +222,16 @@ class ProfilePage extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 13,
-                color: Colors.black54,
+                  color: Color(0xFF7A8AAA),
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(width: 8),
           Text(
             value.isNotEmpty ? value : '-',
             style: const TextStyle(
               fontSize: 13,
-              color: _titleBlue,
+              color: Colors.black,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -71,18 +240,14 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
+  /// 🔹 Child tile
   Widget _childTile(BuildContext context, Map<String, String> child) {
     return InkWell(
-      onTap: () {
-        // navigate to child profile / details
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Tapped ${child['name']}')));
-      },
       borderRadius: BorderRadius.circular(10),
+      onTap: () {},
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -90,40 +255,26 @@ class ProfilePage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // avatar
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: _cardBorder),
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  child['avatar'] ?? '',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.person, color: _titleBlue),
-                ),
-              ),
+            CircleAvatar(
+              radius: 22,
+              backgroundImage: NetworkImage(child['avatar']!),
             ),
             const SizedBox(width: 12),
-            // name + meta
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    child['name'] ?? '',
+                    child['name']!,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: _titleBlue,
+                      color: Colors.black,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    child['meta'] ?? '',
+                    child['meta']!,
                     style: const TextStyle(
                       fontSize: 12,
                       color: _muted,
@@ -133,171 +284,8 @@ class ProfilePage extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
             const Icon(Icons.chevron_right, color: Colors.black38),
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // unwrap sample map to use values (keeps code simple)
-    final name = _profile['name']!;
-    final subtitle = _profile['subtitle']!;
-
-    return Scaffold(
-      backgroundColor: _pageBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        centerTitle: true,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-            color: _titleBlue,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Top card: avatar / name / parent id
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: _cardBorder),
-                        ),
-                        child: ClipOval(
-                          child: Image.network(
-                            'https://i.pravatar.cc/150?img=12',
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                const Icon(Icons.person, color: _titleBlue),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: _titleBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: _muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Profile fields card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _cardBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // title omitted (screen shows not in this card)
-                      _fieldRow('First Name', _profile['firstName'] ?? ''),
-                      _fieldRow('Middle Name', _profile['middleName'] ?? ''),
-                      _fieldRow('Last Name', _profile['lastName'] ?? ''),
-                      _fieldRow('Email Address', _profile['email'] ?? ''),
-                      _fieldRow('Mobile Number', _profile['mobile'] ?? ''),
-                      _fieldRow('PAN', _profile['pan'] ?? ''),
-                      _fieldRow('Aadhaar No.', _profile['aadhaar'] ?? ''),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Linked children card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _cardBorder),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(left: 4, bottom: 8),
-                        child: Text(
-                          'Linked children',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: _titleBlue,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      // children list
-                      ..._children.map((c) => _childTile(context, c)).toList(),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
         ),
       ),
     );

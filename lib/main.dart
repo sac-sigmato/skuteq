@@ -1,9 +1,25 @@
 // lib/main.dart
 
 import 'package:flutter/material.dart';
-import 'screens/splash_screen.dart'; // Import the splash screen
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 
-void main() {
+import 'screens/splash_screen.dart';
+import 'amplifyconfiguration.dart';
+
+Future<void> _configureAmplify() async {
+  try {
+    await Amplify.addPlugin(AmplifyAuthCognito());
+    await Amplify.configure(amplifyconfig);
+    debugPrint('✅ Amplify configured');
+  } catch (e) {
+    debugPrint('ℹ️ Amplify already configured');
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await _configureAmplify();
   runApp(const MyApp());
 }
 
@@ -20,7 +36,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const SplashScreen(), // Set SplashScreen as the home
+      home: const SplashScreen(),
     );
   }
 }

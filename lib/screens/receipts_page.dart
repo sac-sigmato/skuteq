@@ -1,9 +1,19 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
+import 'package:skuteq_app/services/receipt_service.dart';
 import 'receipt_details_page.dart';
+import 'package:intl/intl.dart';
+
 
 class ReceiptsPage extends StatefulWidget {
-  const ReceiptsPage({super.key});
+  final Map<String, dynamic> apiResponse;
+  final String branchId;
+
+  const ReceiptsPage({
+    super.key,
+    required this.apiResponse,
+    required this.branchId,
+  });
 
   @override
   State<ReceiptsPage> createState() => _ReceiptsPageState();
@@ -13,25 +23,8 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
   List<Map<String, dynamic>> receiptsData = [];
   Map<String, dynamic> summaryData = {};
 
-  final String sampleJsonData = '''
-  {
-    "summary": {
-      "totalReceipts": 12,
-      "amountPaid": "₹ 58,400"
-    },
-    "receipts": [
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"},
-      {"receiptNo":"RCP-1042","date":"08 Oct 2024","amount":"₹ 900"}
-    ]
-  }
-  ''';
-
-  /// COLORS (MATCH SS)
-  static const Color pageBg = Color(0xFFF6F7FB);
+  /// COLORS
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color primaryBlue = Color(0xFF1E88E5);
   static const Color mutedText = Color(0xFF7A869A);
@@ -39,22 +32,79 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
   @override
   void initState() {
     super.initState();
-    final data = json.decode(sampleJsonData);
-    summaryData = Map<String, dynamic>.from(data['summary']);
-    receiptsData = List<Map<String, dynamic>>.from(data['receipts']);
+
+    final response = widget.apiResponse;
+
+    final List list = response['data'] ?? [];
+
+    summaryData = {
+      'totalReceipts': response['total_count'] ?? 0,
+      'amountPaid': "₹ ${ _formatAmount(response['report_total'] ?? 0)}",
+    };
+
+    receiptsData = List<Map<String, dynamic>>.from(
+      list.map(
+        (e) => {
+          'receiptNo': e['receipt_number'] ,
+          'receiptId': e['_id'], // 🔥 IMPORTANT
+          'date': _formatDate(e['received_date']),
+          'amount': "₹ ${_formatAmount(e['received_amount'])}",
+        },
+      ),
+    );
+  }
+
+  String _formatAmount(dynamic value) {
+    if (value == null) return '0';
+
+    final num amount = value is num
+        ? value
+        : num.tryParse(value.toString()) ?? 0;
+
+    // Indian number format
+    final formatter = NumberFormat('#,##,###', 'en_IN');
+
+    if (amount % 1 == 0) {
+      return formatter.format(amount.toInt());
+    } else {
+      return formatter.format(amount);
+    }
+  }
+
+
+  String _formatDate(String? iso) {
+    if (iso == null) return '';
+    final d = DateTime.tryParse(iso);
+    if (d == null) return '';
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return "${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}";
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: pageBg,
-
       body: Column(
         children: [
-          /// 🔹 HEADER (INSIDE BODY)
+          /// HEADER
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
             margin: const EdgeInsets.only(top: 20),
             child: SafeArea(
               bottom: false,
@@ -71,7 +121,6 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
-                          color: Colors.black87,
                         ),
                       ),
                     ),
@@ -82,10 +131,9 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
             ),
           ),
 
-          /// 🔹 TOP GAP (LIKE SS)
           Container(height: 14, color: pageBg),
 
-          /// 🔹 CONTENT
+          /// CONTENT
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -114,17 +162,9 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         children: [
-          /// LEFT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,14 +183,11 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black87,
                   ),
                 ),
               ],
             ),
           ),
-
-          /// RIGHT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -165,11 +202,10 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  summaryData['amountPaid'],
+                  summaryData['amountPaid'] ?? '₹ 0',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black87,
                   ),
                 ),
               ],
@@ -183,6 +219,16 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
   // ---------------- RECEIPTS LIST ----------------
 
   Widget _receiptList() {
+    if (receiptsData.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 40),
+        child: Text(
+          "No receipts found",
+          style: TextStyle(color: mutedText, fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
     return Column(
       children: receiptsData
           .map(
@@ -195,64 +241,105 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
     );
   }
 
-  Widget _receiptTile(Map<String, dynamic> r) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ReceiptDetailsPage(receiptNo: r['receiptNo']),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            /// LEFT TEXT
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "#${r['receiptNo']}",
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    r['date'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: mutedText,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+ Widget _receiptTile(Map<String, dynamic> r) {
+    return Material(
+      color: Colors.transparent, // IMPORTANT
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () async {
+          debugPrint("🟢 RECEIPT TAPPED => ${r['receiptId']}");
 
-            /// AMOUNT
-            Text(
-              r['amount'],
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: Colors.black87,
+          try {
+            final receiptId = r['receiptId'];
+            final branchId = widget.branchId;
+
+            if (receiptId == null || branchId == null) {
+              throw Exception("Receipt params missing");
+            }
+            await InvoiceStorage.saveReceiptInfo(
+              receiptId: receiptId.toString(),
+              branchId: branchId.toString(),
+            );
+
+            final receiptService = ReceiptService();
+
+            // 🔄 SHOW LOADER
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+
+            final receiptDetailsResponse = await receiptService
+                .fetchReceiptDetails(
+                  receiptId: receiptId.toString(),
+                  branchId: branchId.toString(),
+                );
+
+            // ❌ CLOSE LOADER
+            Navigator.pop(context);
+
+            // ➡️ NAVIGATE
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    ReceiptDetailsPage(apiResponse: receiptDetailsResponse),
               ),
-            ),
-          ],
+            );
+          } catch (e) {
+            Navigator.pop(context);
+            debugPrint("❌ Receipt details error: $e");
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Failed to load receipt details")),
+            );
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "#${r['receiptNo']}",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      r['date'],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: mutedText,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                r['amount'],
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
 }

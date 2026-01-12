@@ -1,5 +1,3 @@
-// lib/screens/onboarding_page.dart
-
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 
@@ -12,172 +10,224 @@ class OnboardingPage extends StatefulWidget {
 
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
-  int _currentPage = 0;
+  int _index = 0;
 
-  final List<Map<String, String>> onboardingData = [
+  final List<Map<String, dynamic>> pages = [
     {
-      'title': 'Track Records',
-      'description': 'Track your children real time',
-      'image': 'assets/images/1.png',
+      "image": "assets/images/onboarding_1.png",
+      "features": [
+        {
+          "iconAsset": "assets/icon/attendance.png",
+          "title": "Attendance",
+          "desc": "Daily presence at a glance with quick absence alerts",
+        },
+        {
+          "iconAsset": "assets/icon/academic.png",
+          "title": "Academic Details",
+          "desc": "Subjects, grades, and term progress neatly organized",
+        },
+      ],
+      "button": "Next",
     },
     {
-      'title': 'Stay Updated',
-      'description': 'Get real-time updates on attendance and grades',
-      'image': 'assets/images/2.png',
+      "image": "assets/images/onboarding_2.png",
+      "features": [
+        {
+          "iconAsset": "assets/icon/invoice.png",
+          "title": "Invoices",
+          "desc": "Access fee invoices, due dates, and download PDF copies",
+        },
+        {
+          "iconAsset": "assets/icon/receipt.png",
+          "title": "Receipts",
+          "desc": "View payment history with secure, shareable receipts",
+        },
+      ],
+      "button": "Next",
     },
-     {
-      'title': 'Connect with Teachers',
-      'description': 'Communicate easily with teachers and staff',
-      'image': 'assets/images/3.png',
+    {
+      "image": "assets/images/onboarding_3.png",
+      "features": [
+        {
+          "iconAsset": "assets/icon/switch_child.png",
+          "title": "Switch Child",
+          "desc": "Easily toggle between linked children",
+        },
+        {
+          "iconAsset": "assets/icon/alerts.png",
+          "title": "Alerts",
+          "desc": "Stay informed on attendance, fees, and academics",
+        },
+      ],
+      "button": "Sign in",
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-
-    // Track swipes
-    _pageController.addListener(() {
-      setState(() {
-        _currentPage = _pageController.page?.round() ?? 0;
-      });
-    });
-
-    // Start auto-slide
-    Future.delayed(Duration.zero, () {
-      _startAutoSlide();
-    });
-  }
-
-  // AUTO SLIDE FUNCTION
-  void _startAutoSlide() async {
-    bool forward = true; // direction control
-
-    while (mounted) {
-      await Future.delayed(const Duration(milliseconds: 1500)); // 1.5 seconds
-      if (!mounted) return;
-
-      if (forward) {
-        if (_currentPage < onboardingData.length - 1) {
-          _pageController.nextPage(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-        } else {
-          forward = false; // reached last → reverse
-        }
-      } else {
-        if (_currentPage > 0) {
-          _pageController.previousPage(
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeInOut,
-          );
-        } else {
-          forward = true; // reached first → forward again
-        }
-      }
+  void _onButtonTap() {
+    if (_index == pages.length - 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } else {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
     }
-  }
-
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  // Navigate to Login
-  void _navigateToLogin() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                itemCount: onboardingData.length,
-                itemBuilder: (context, index) {
-                  return _buildPage(
-                    title: onboardingData[index]['title']!,
-                    description: onboardingData[index]['description']!,
-                    image: onboardingData[index]['image']!,
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // PAGE INDICATOR DOTS
-            _buildDots(),
-
-            const SizedBox(height: 40),
-
-            // BUTTON
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _navigateToLogin, // NO sliding here!
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF106EB4),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text("Let's go!", style: TextStyle(fontSize: 18)),
-              ),
-            ),
-          ],
+      backgroundColor: const Color(0xFFF6FAFF),
+      body: SafeArea(
+        child: PageView.builder(
+          controller: _pageController,
+          itemCount: pages.length,
+          onPageChanged: (i) => setState(() => _index = i),
+          itemBuilder: (_, i) => _buildPage(pages[i]),
         ),
       ),
     );
   }
 
-  // IMAGE PAGE
-  Widget _buildPage({
-    required String title,
-    required String description,
-    required String image,
-  }) {
-    return Center(
-      child: Image.asset(
-        image,
-        fit: BoxFit.contain,
-        width: double.infinity,
-        height: double.infinity,
+  /// 🔹 SINGLE PAGE (FIGMA MATCH)
+  Widget _buildPage(Map<String, dynamic> data) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      child: Column(
+        children: [
+          const SizedBox(height: 100),
+          /// LOGO
+          Image.asset("assets/images/skuteq_logo.png", height: 34),
+
+          const SizedBox(height: 20),
+
+          /// ILLUSTRATION
+          SizedBox(
+            height: 260,
+            child: Image.asset(data["image"], fit: BoxFit.contain),
+          ),
+
+          const SizedBox(height: 20),
+
+          /// FEATURE LIST + DOTS + BUTTON (SAME FLOW)
+          Expanded(
+            child: Column(
+              children: [
+                /// FEATURE CARDS
+                ...data["features"].map<Widget>((f) {
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE7EFF7)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF4FF),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Image.asset(
+                              f["iconAsset"],
+                              width: 18,
+                              height: 18,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                f["title"],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF000000),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                f["desc"],
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF7A8CA5),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+
+                const SizedBox(height: 16),
+
+                /// DOTS (NOW PART OF THE LIST)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    pages.length,
+                    (i) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _index == i
+                            ? const Color(0xFF000000)
+                            : const Color(0xFFD6DEEA),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
+                /// BUTTON (IMMEDIATELY AFTER DOTS)
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _onButtonTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1F6FDB),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      data["button"],
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  // DOT INDICATOR
-  Widget _buildDots() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(onboardingData.length, (index) {
-        final bool isActive = _currentPage == index;
-
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-          width: isActive ? 20.0 : 10.0,
-          height: 10.0,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: isActive ? Colors.blue : Colors.grey.withOpacity(0.5),
-          ),
-        );
-      }),
-    );
-  }
 }
