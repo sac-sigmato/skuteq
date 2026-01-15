@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/app_bottom_nav.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 import 'package:skuteq_app/services/invoice_service.dart';
 import 'dart:math' as math;
 import '../helpers/invoice_storage.dart';
@@ -24,7 +26,7 @@ class _InvoicesPageState extends State<InvoicesPage>
   @override
   void initState() {
     super.initState();
-  
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 260),
@@ -41,6 +43,7 @@ class _InvoicesPageState extends State<InvoicesPage>
 
   // ---------------- COLORS ----------------
   static const Color bg = Color(0xFFF6FAFF);
+  static const Color pageBg = Color(0xFFEAF4FF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color titleBlue = Color(0xFF244A6A);
   static const Color pillBg = Color(0xFFEFF7FF);
@@ -220,40 +223,15 @@ class _InvoicesPageState extends State<InvoicesPage>
     final items = _selectedTab == 0 ? _outstanding : _paid;
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: pageBg,
+      appBar: SharedAppHead(
+        title: "Invoices",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: Column(
         children: [
-          // 🔹 HEADER
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
-            margin: const EdgeInsets.only(top: 20),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Invoices",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
-
-          Container(height: 14, color: bg),
+          Container(height: 14, color: pageBg),
 
           // 🔹 TABS
           Padding(
@@ -289,6 +267,7 @@ class _InvoicesPageState extends State<InvoicesPage>
           ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 

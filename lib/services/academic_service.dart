@@ -31,7 +31,7 @@ class AcademicService {
       uri,
       headers: {"Authorization": token, "Content-Type": "application/json"},
     );
-
+    print(response.body);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception("Failed to fetch AY/Class");
   }
@@ -76,10 +76,10 @@ class AcademicService {
       headers: {"Authorization": token, "Content-Type": "application/json"},
     );
 
-    debugPrint("════════════ LIST EXAMS ════════════");
-    debugPrint("STATUS => ${response.statusCode}");
-    debugPrint("BODY => ${response.body}");
-    debugPrint("══════════════════════════════════=");
+    // debugPrint("════════════ LIST EXAMS ════════════");
+    // debugPrint("STATUS => ${response.statusCode}");
+    // debugPrint("BODY => ${response.body}");
+    // debugPrint("══════════════════════════════════=");
 
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception("Failed to fetch exams");
@@ -159,10 +159,10 @@ class AcademicService {
         },
       );
 
-      debugPrint("════════════ ACADEMIC REPORTS ════════════");
-      debugPrint("STATUS => ${response.statusCode}");
-      debugPrint("BODY => ${response.body}");
-      debugPrint("════════════════════════════════════════=");
+      // debugPrint("════════════ ACADEMIC REPORTS ════════════");
+      // debugPrint("STATUS => ${response.statusCode}");
+      // debugPrint("BODY => ${response.body}");
+      // debugPrint("════════════════════════════════════════=");
 
       if (response.statusCode == 200) return jsonDecode(response.body);
 

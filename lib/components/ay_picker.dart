@@ -4,6 +4,7 @@ import 'package:skuteq_app/helpers/invoice_storage.dart';
 class AyClassOption {
   final String academicYearId;
   final String academicYearName;
+  final String name;
   final String classId;
   final String className;
   final String sectionId;
@@ -18,6 +19,7 @@ class AyClassOption {
   const AyClassOption({
     required this.academicYearId,
     required this.academicYearName,
+    required this.name,
     required this.classId,
     required this.className,
     required this.sectionId,
@@ -117,9 +119,9 @@ DateTime? _tryParseDate(String? s) {
 
  String _displayLine(AyClassOption? opt) {
     if (opt == null) return "";
-    final ay = _ayLabelFromDates(opt); // ✅ 2025-2026
-    final grade = _formatGrade(opt.className);
-    final section = _formatSection(opt.sectionName);
+    final ay = opt.name; // ✅ 2025-2026
+    final grade = opt.className;
+    final section = opt.sectionName;
 
     final inside = [grade, section].where((e) => e.trim().isNotEmpty).join(" ");
     return inside.isEmpty ? ay : "$ay ($inside)";

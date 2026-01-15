@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 
 class FaqPage extends StatefulWidget {
   const FaqPage({super.key});
@@ -40,43 +41,14 @@ class _FaqPageState extends State<FaqPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBg,
+      appBar: SharedAppHead(
+        title: "FAQs",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: Column(
         children: [
-          Container(height: 20),
-          /// 🔹 HEADER INSIDE BODY
-          /// 
-          Container(
-            color: Colors.white,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left, color: Colors.black),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      'FAQs',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
+         
           /// 🔹 GAP BELOW HEADER
           Container(height: 14),
 

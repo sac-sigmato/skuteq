@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
 
 import '../services/amplify_auth_service.dart';
 import '../services/student_service.dart';
@@ -28,44 +30,22 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+   const Color pageBg = Color(0xFFEAF4FF);
     return Scaffold(
-      backgroundColor: const Color(0xFFF6FAFF),
+      backgroundColor: pageBg,
+
+      // ✅ Common Header
+      appBar: SharedAppHead(
+        title: "Sign In",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              /// 🔹 TOP SPACING
-              const SizedBox(height: 24),
-
-              /// 🔹 HEADER INSIDE BODY (MATCHES SS)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, size: 22),
-                      onPressed: _currentStep == 1
-                          ? () => setState(() => _currentStep = 0)
-                          : () => Navigator.maybePop(context),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        "Sign in",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 40), // balance back icon
-                  ],
-                ),
-              ),
-
               /// 🔹 CONTENT
               Expanded(
                 child: Center(
@@ -97,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
         /// LOGO
         Center(child: Image.asset("assets/images/logo.png", height: 36)),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 24),
 
         /// CARD CONTAINER (INPUT + BUTTON)
         Container(
@@ -132,7 +112,11 @@ class _LoginPageState extends State<LoginPage> {
                   style: _buttonStyle(),
                   child: const Text(
                     "Next",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white ),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -143,10 +127,9 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-
   // ---------------- PASSWORD STEP ----------------
 
-Widget _buildPasswordStep() {
+  Widget _buildPasswordStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -259,13 +242,17 @@ Widget _buildPasswordStep() {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: _buttonStyle(),
-                child: const Text(
-                  "Sign In",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                  onPressed: _isLoading ? null : _handleLogin,
+                  style: _buttonStyle(),
+                  child: const Text(
+                    "Sign In",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-              ),
               ),
 
               if (_isLoading)
@@ -293,7 +280,6 @@ Widget _buildPasswordStep() {
     );
   }
 
-
   // ---------------- LOGIN HANDLER ----------------
 
   Future<void> _handleLogin() async {
@@ -313,6 +299,9 @@ Widget _buildPasswordStep() {
       }
 
       final students = await _studentService.fetchStudents();
+
+      // ✅ THIS IS CORRECT
+      await InvoiceStorage.saveStudentsData(students);
 
       if (!mounted) return;
 

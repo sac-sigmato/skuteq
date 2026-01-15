@@ -1,176 +1,214 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
-  // sample data
-  final Map<String, String> _profile = const {
-    'name': 'Rohit Sharma',
-    'subtitle': 'Parent ID P-3021',
-    'firstName': 'Abhi Sharma',
-    'middleName': 'Odds',
-    'lastName': 'Sdfsdf',
-    'email': 'kjcdks@jdkf.com',
-    'mobile': '849 373 7373',
-    'pan': 'DSGHB3456H',
-    'aadhaar': '-',
-  };
-
-  final List<Map<String, String>> _children = const [
-    {
-      'name': 'Aarav Sharma',
-      'meta': 'Grade 5 • Sec B • Roll 17',
-      'avatar': 'https://i.pravatar.cc/150?img=32',
-    },
-    {
-      'name': 'Anaya Sharma',
-      'meta': 'Grade 2 • Sec A • Roll 08',
-      'avatar': 'https://i.pravatar.cc/150?img=47',
-    },
-  ];
-
   // UI colors
-  static const Color _pageBg = Color(0xFFF6FAFF);
-  static const Color _headerBg = Color(0xFFEAF4FF);
+  static const Color _pageBg = Color(0xFFEAF4FF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
   static const Color _titleBlue = Color(0xFF244A6A);
   static const Color _muted = Color(0xFF7A8AAA);
 
+  String safeText(dynamic value) {
+    if (value == null) return '-';
+    final v = value.toString().trim();
+    return v.isEmpty ? '-' : v;
+  }
+
+  String buildChildMeta(Map<String, dynamic> child) {
+    final studentId = (child['studentDbId'] ?? '').toString().trim();
+
+    if (studentId.isEmpty) return '-';
+
+    return studentId.toUpperCase(); // ✅ CAPITAL
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _pageBg,
-      body: Column(
-        children: [
-          Container(height: 20),
-          /// 🔹 HEADER INSIDE BODY (MATCH SS)
-          Container(
-            color: Colors.white,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left, color: Colors.black87),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      'My Profile',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48), // balance back button
-                  ],
-                ),
-              ),
-            ),
+    return FutureBuilder(
+      future: Future.wait([
+        InvoiceStorage.getParentData(),
+        InvoiceStorage.getLinkedChildren(),
+        InvoiceStorage.getStudent_Id(),
+      ]),
+      builder: (context, snapshot) {
+        // 🔄 Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // ❌ No data
+        if (!snapshot.hasData || snapshot.data == null) {
+          return Scaffold(
+            backgroundColor: _pageBg,
+            body: const Center(child: Text("No profile data found")),
+          );
+        }
+
+        // ✅ Extract data
+        final parentData = snapshot.data![0] as Map<String, dynamic>?;
+        final List<Map<String, dynamic>> allChildren =
+            snapshot.data![1] as List<Map<String, dynamic>>;
+        final String? selectedStudentId = snapshot.data![2] as String?;
+
+        final List<Map<String, dynamic>> children = allChildren.where((child) {
+          final childId =
+              child['studentDbId']?.toString() ??
+              child['_id']?.toString() ??
+              child['student_id']?.toString();
+
+          return childId != selectedStudentId;
+        }).toList();
+
+        if (parentData == null) {
+          return Scaffold(
+            backgroundColor: _pageBg,
+            body: const Center(child: Text("Parent data missing")),
+          );
+        }
+
+        final String name = parentData['name']?.toString() ?? '';
+        final String email = parentData['email']?.toString() ?? '';
+        final String mobile = parentData['mobile']?.toString() ?? '';
+        final String avatarUrl = parentData['avatarUrl']?.toString() ?? '';
+        final String subtitle = parentData['parentId'] != null
+            ? "Parent ID ${parentData['parentId']}"
+            : "";
+
+        return Scaffold(
+          backgroundColor: _pageBg,
+          
+          // ✅ Common Header
+          appBar: SharedAppHead(
+            title: "My Profile",
+            showDrawer: false,
+            showBack: true,
           ),
+          body: Column(
+            children: [
+              // const SizedBox(height: 14),
 
-          /// 🔹 GAP BELOW HEADER (VISIBLE IN SS)
-          Container(height: 14),
-
-          /// 🔹 PAGE CONTENT
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: [
-                  /// Profile summary card
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _cardBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _cardBorder),
-                          ),
-                          child: ClipOval(
-                            child: Image.network(
-                              'https://i.pravatar.cc/150?img=12',
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  const Icon(Icons.person, color: _titleBlue),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _profile['name']!,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: _titleBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _profile['subtitle']!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: _muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  /// Profile fields
-                  _card(
+              /// 🔹 CONTENT
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
                     children: [
-                      _field('First Name', _profile['firstName']!),
-                      _field('Middle Name', _profile['middleName']!),
-                      _field('Last Name', _profile['lastName']!),
-                      _field('Email Address', _profile['email']!),
-                      _field('Mobile Number', _profile['mobile']!),
-                      _field('PAN', _profile['pan']!),
-                      _field('Aadhaar No.', _profile['aadhaar']!),
+                      /// Profile summary card
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _cardBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: _cardBorder),
+                              ),
+                              child: ClipOval(
+                                child: Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.person,
+                                    color: _titleBlue,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: _titleBlue,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    subtitle,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: _muted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      /// Profile fields
+                      _card(
+                        children: [
+                          _field('First Name', safeText(parentData['name'])),
+                          _field(
+                            'Middle Name',
+                            safeText(parentData['middle_name']),
+                          ),
+                          _field(
+                            'Last Name',
+                            safeText(parentData['last_name']),
+                          ),
+                          _field(
+                            'Email Address',
+                            safeText(parentData['email']),
+                          ),
+                          _field(
+                            'Mobile Number',
+                            safeText(parentData['mobile']),
+                          ),
+                          _field('PAN', safeText(parentData['pan'])),
+                          _field(
+                            'Aadhaar No.',
+                            safeText(parentData['aadhaar']),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      /// Linked children (FROM STORAGE)
+                      if (children.isNotEmpty)
+                        _card(
+                          title: 'Linked children',
+                          children: children.map((child) {
+                            return _childTile(
+                              context,
+                              name: safeText(child['name']),
+                              meta: buildChildMeta(child),
+                              avatar: child['avatarUrl'],
+                            );
+                          }).toList(),
+                        ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
-
-                  const SizedBox(height: 14),
-
-                  /// Linked children
-                  _card(
-                    title: 'Linked children',
-                    children: _children
-                        .map((c) => _childTile(context, c))
-                        .toList(),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -186,7 +224,7 @@ class ProfilePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
+          if (title != null)
             Padding(
               padding: const EdgeInsets.only(left: 4, bottom: 8),
               child: Text(
@@ -194,11 +232,9 @@ class ProfilePage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Colors.black,
                 ),
               ),
             ),
-          ],
           ...children,
         ],
       ),
@@ -211,7 +247,6 @@ class ProfilePage extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _cardBorder),
       ),
@@ -222,18 +257,14 @@ class ProfilePage extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 13,
-                  color: Color(0xFF7A8AAA),
+                color: Color(0xFF7A8AAA),
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           Text(
             value.isNotEmpty ? value : '-',
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black,
-              fontWeight: FontWeight.w800,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -241,7 +272,16 @@ class ProfilePage extends StatelessWidget {
   }
 
   /// 🔹 Child tile
-  Widget _childTile(BuildContext context, Map<String, String> child) {
+  Widget _childTile(
+    BuildContext context, {
+    required String name,
+    required String meta,
+    dynamic avatar,
+  }) {
+    final String avatarUrl = avatar == null || avatar.toString().trim().isEmpty
+        ? ''
+        : avatar.toString();
+
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {},
@@ -257,7 +297,13 @@ class ProfilePage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundImage: NetworkImage(child['avatar']!),
+              backgroundColor: const Color(0xFFEAF0F6),
+              backgroundImage: avatarUrl.isNotEmpty
+                  ? NetworkImage(avatarUrl)
+                  : null,
+              child: avatarUrl.isEmpty
+                  ? const Icon(Icons.person, color: Colors.black54, size: 22)
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -265,7 +311,7 @@ class ProfilePage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    child['name']!,
+                    name,
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -274,7 +320,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    child['meta']!,
+                    meta,
                     style: const TextStyle(
                       fontSize: 12,
                       color: _muted,

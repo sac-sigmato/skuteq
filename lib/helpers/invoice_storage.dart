@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class InvoiceStorage {
@@ -19,24 +21,116 @@ class InvoiceStorage {
   static const String _kStudent_Id = "_id";
   static const String _kBranchId = "branch_id";
   static const String _kAyStatus = "ongoing";
+  static const String _kStudentsData = "students_data";
+
+  static const _attendancePercentageKey = "attendance_percentage";
+  static const _attendanceTotalDaysKey = "attendance_total_days";
+  static const _attendancePresentDaysKey = "attendance_present_days";
+  static const _parentDataKey = "parent_data";
+  static const _linkedChildrenKey = "linked_children";
+
+  static Future<void> saveLinkedChildren(
+    List<Map<String, dynamic>> children,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_linkedChildrenKey, jsonEncode(children));
+  }
+
+  static Future<List<Map<String, dynamic>>> getLinkedChildren() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_linkedChildrenKey);
+    if (raw == null) return [];
+    final List list = jsonDecode(raw);
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  static Future<void> clearLinkedChildren() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_linkedChildrenKey);
+  }
+  static Future<void> saveParentData(Map<String, dynamic> parentData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_parentDataKey, jsonEncode(parentData));
+  }
+
+  static Future<Map<String, dynamic>?> getParentData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_parentDataKey);
+    if (raw == null) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  static Future<void> clearParentData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_parentDataKey);
+  }
+
+  static Future<void> saveAttendanceStats({
+    required double percentage,
+    required int totalDays,
+    required int presentDays,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setDouble(_attendancePercentageKey, percentage);
+    await prefs.setInt(_attendanceTotalDaysKey, totalDays);
+    await prefs.setInt(_attendancePresentDaysKey, presentDays);
+  }
+
+  static Future<double> getAttendancePercentage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_attendancePercentageKey) ?? 0.0;
+  }
+
+  static Future<int> getAttendanceTotalDays() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_attendanceTotalDaysKey) ?? 0;
+  }
+
+  static Future<int> getAttendancePresentDays() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_attendancePresentDaysKey) ?? 0;
+  }
+
+  static Future<void> saveStudentsData(List<dynamic> students) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kStudentsData, jsonEncode(students));
+  }
+
+  static Future<List<dynamic>> getStudentsData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_kStudentsData);
+
+    if (data == null || data.isEmpty) return [];
+
+    return jsonDecode(data) as List<dynamic>;
+  }
+
+  static Future<void> clearStudentsData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kStudentsData);
+  }
 
   static Future<void> saveAyStatus(String status) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kAyStatus, status);
   }
+
   static Future<String?> getAyStatus() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_kAyStatus);
   }
 
-static Future<void> clearAyStatus() async {
+  static Future<void> clearAyStatus() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kAyStatus);
-  } 
+  }
+
   static Future<void> saveBranchId(String branchId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kBranchId, branchId);
   }
+
   static Future<String?> getBranchId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_kBranchId);
@@ -203,7 +297,7 @@ static Future<void> clearAyStatus() async {
     await prefs.remove(_kAyEndDate);
   }
 
- static Future<Map<String, String>> getInvoiceParamsOrThrow() async {
+  static Future<Map<String, String>> getInvoiceParamsOrThrow() async {
     final prefs = await SharedPreferences.getInstance();
 
     final studentId = prefs.getString(_kStudentId); // STDB...
@@ -223,28 +317,30 @@ static Future<void> clearAyStatus() async {
     return {"studentId": studentId, "startDate": startDate, "endDate": endDate};
   }
 
-static Future<Map<String, String>> getInvoiceParamsWithStudentDbIdOrThrow() async {
-  final prefs = await SharedPreferences.getInstance();
+  static Future<Map<String, String>>
+  getInvoiceParamsWithStudentDbIdOrThrow() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  final studentDbId = prefs.getString(_kStudent_Id); // Mongo _id
-  final startDate = prefs.getString(_kAyStartDate);
-  final endDate = prefs.getString(_kAyEndDate);
+    final studentDbId = prefs.getString(_kStudent_Id); // Mongo _id
+    final startDate = prefs.getString(_kAyStartDate);
+    final endDate = prefs.getString(_kAyEndDate);
 
-  if (studentDbId == null || studentDbId.isEmpty) {
-    throw Exception("_id (Mongo) missing in storage");
+    if (studentDbId == null || studentDbId.isEmpty) {
+      throw Exception("_id (Mongo) missing in storage");
+    }
+    if (startDate == null || startDate.isEmpty) {
+      throw Exception("startDate missing in storage");
+    }
+    if (endDate == null || endDate.isEmpty) {
+      throw Exception("endDate missing in storage");
+    }
+
+    return {
+      "studentDbId": studentDbId,
+      "startDate": startDate,
+      "endDate": endDate,
+    };
   }
-  if (startDate == null || startDate.isEmpty) {
-    throw Exception("startDate missing in storage");
-  }
-  if (endDate == null || endDate.isEmpty) {
-    throw Exception("endDate missing in storage");
-  }
 
-  return {
-    "studentDbId": studentDbId,
-    "startDate": startDate,
-    "endDate": endDate,
-  };
-}
-
+  // static Future<void> clearStudentData() async {}
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 import 'login_page.dart'; // <-- Import the LoginPage
 
 // Define the two states of this screen
@@ -282,25 +283,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // AppBar is only shown on the form state, matching SS 1
-      appBar: _currentState == ResetPasswordState.form
-          ? AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              title: const Text(
-                "Change password",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-            )
-          : null, // No AppBar on success state (SS 2)
+      appBar: SharedAppHead(
+        title: "Reset Password",
+        showDrawer: false,
+        showBack: true,
+      ), // No AppBar on success state (SS 2)
       body: SafeArea(
         child: _currentState == ResetPasswordState.form
             ? _buildFormUI()

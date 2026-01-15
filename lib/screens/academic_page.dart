@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/app_bottom_nav.dart';
 import 'package:skuteq_app/components/exam_type_dropdown.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 
 import 'package:skuteq_app/services/academic_service.dart';
 
@@ -24,7 +26,7 @@ class AcademicPage extends StatefulWidget {
 
 class _AcademicPageState extends State<AcademicPage> {
   // 🎨 COLORS
-  static const Color pageBg = Color(0xFFF6FAFF);
+  static const Color pageBg = Color(0xFFEAF4FF);
   static const Color cardBg = Colors.white;
   static const Color cardBorder = Color(0xFFE7EFF7);
   static const Color subjectBg = Color(0xFFEFF6FF);
@@ -242,39 +244,13 @@ class _AcademicPageState extends State<AcademicPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: pageBg,
+      appBar: SharedAppHead(
+        title: "Academic Details",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: Column(
         children: [
-          // header
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
-            margin: const EdgeInsets.only(top: 20),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, color: Colors.black87),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Academic Details",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: titleColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
-
           Container(height: 14, color: pageBg),
 
           Expanded(
@@ -302,6 +278,7 @@ class _AcademicPageState extends State<AcademicPage> {
           ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 

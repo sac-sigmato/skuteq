@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 
 class AlertsPage extends StatelessWidget {
   const AlertsPage({super.key});
@@ -44,7 +45,7 @@ class AlertsPage extends StatelessWidget {
   ];
 
   // 🎨 Colors matching SS
-  static const Color _pageBg = Color(0xFFF6FAFF);
+  static const Color _pageBg = Color(0xFFEAF4FF);
   static const Color _headerBg = Color(0xFFEAF4FF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
   static const Color _titleBlue = Color(0xFF244A6A);
@@ -55,45 +56,11 @@ class AlertsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBg,
+
+      // ✅ Common Header
+      appBar: SharedAppHead(title: "Alerts", showDrawer: false, showBack: true),
       body: Column(
         children: [
-          Container(height: 20),
-          /// 🔹 HEADER INSIDE BODY (as per SS)
-          /// 
-          Container(
-            color: Colors.white,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 14,
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left, color: Colors.black87),
-                      onPressed: () => Navigator.pop(context),
-                      color:  Colors.black,
-                    ),
-                    const Spacer(),
-                    const Text(
-                      "Alerts",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          /// 🔹 TOP GAP BELOW HEADER
           Container(height: 14),
 
           /// 🔹 ALERTS LIST
@@ -141,7 +108,7 @@ class AlertsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(50),
               border: Border.all(color: _cardBorder),
             ),
-            child: Icon(_iconFor(alert['icon']), size: 20, color:  Colors.black),
+            child: Icon(_iconFor(alert['icon']), size: 20, color: Colors.black),
           ),
 
           const SizedBox(width: 12),
@@ -156,7 +123,7 @@ class AlertsPage extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color:  Colors.black,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),

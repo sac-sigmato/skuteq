@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:skuteq_app/components/avatar.dart';
 import 'package:skuteq_app/components/ay_picker.dart';
 import 'package:skuteq_app/components/student_header_card.dart';
 import 'package:skuteq_app/helpers/invoice_storage.dart';
 import 'package:skuteq_app/services/academic_service.dart';
 import 'package:skuteq_app/services/receipt_service.dart';
 import 'package:skuteq_app/widgets/app_drawer.dart';
+import '../services/student_service.dart';
 import 'profile_page.dart';
 import 'attendance_widget.dart';
 import 'academic_page.dart';
@@ -15,18 +15,18 @@ import 'student_details_page.dart';
 import 'alerts_page.dart';
 import '../services/invoice_service.dart';
 import '../services/attendance_service.dart';
-import 'package:skuteq_app/components/app_bar.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 
 class StudentDashboard extends StatefulWidget {
   final Map<String, dynamic> studentData;
   final Map<String, dynamic> ayClassResponse;
-  final int receiptsAllTotalCount;
+  final Map<String, dynamic> dashboardData;
 
   const StudentDashboard({
     super.key,
     required this.studentData,
     required this.ayClassResponse,
-    required this.receiptsAllTotalCount,
+    required this.dashboardData,
   });
 
   @override
@@ -34,6 +34,9 @@ class StudentDashboard extends StatefulWidget {
 }
 
 class _StudentDashboardState extends State<StudentDashboard> {
+  late Map<String, dynamic> _dashboardData;
+  bool _loadingDashboard = false;
+
   int currentIndex = 0;
   String selectedYear = "";
 
@@ -102,10 +105,87 @@ class _StudentDashboardState extends State<StudentDashboard> {
     return "https://dev-cdn.skuteq.net/public/$raw";
   }
 
+  Future<void> _reloadDashboardForSelectedAy() async {
+    final opt = _selectedAy;
+    if (opt == null) return;
+
+    try {
+      setState(() => _loadingDashboard = true);
+
+      final branchId = student['branch_id']?.toString() ?? '';
+      final studentDbId = student['_id']?.toString() ?? '';
+
+      if (branchId.isEmpty || studentDbId.isEmpty) {
+        throw Exception("Missing branchId / studentId");
+      }
+      final StudentService _studentService = StudentService();
+      final dashboardData = await _studentService.fetchStudentDashboard(
+        branchId: branchId,
+        studentId: studentDbId,
+        academicYearId: opt.academicYearId,
+        startDate: isoToYmd(opt.ayStartDate!),
+        endDate: isoToYmd(opt.ayEndDate!),
+        classId: opt.classId,
+        sectionId: opt.sectionId,
+      );
+
+      print('✅ Decoded Student Dashboard: $dashboardData');
+
+      // ✅ Extract attendance safely
+      final attendance =
+          dashboardData['attendance'] as Map<String, dynamic>? ?? {};
+
+      // ✅ percentage (can be int or double)
+      final double percentage = attendance['percentage'] is num
+          ? (attendance['percentage'] as num).toDouble()
+          : double.tryParse(attendance['percentage']?.toString() ?? '0') ?? 0.0;
+
+      // ✅ total days
+      final int totalDays = attendance['total_days'] is int
+          ? attendance['total_days']
+          : int.tryParse(attendance['total_days']?.toString() ?? '0') ?? 0;
+
+      // ✅ present days
+      final int presentDays = attendance['total_present'] is int
+          ? attendance['total_present']
+          : int.tryParse(attendance['total_present']?.toString() ?? '0') ?? 0;
+
+      // ✅ Save all 3 values
+      await InvoiceStorage.saveAttendanceStats(
+        percentage: percentage,
+        totalDays: totalDays,
+        presentDays: presentDays,
+      );
+
+      setState(() {
+        _dashboardData = dashboardData;
+      });
+    } catch (e) {
+      debugPrint("❌ Dashboard reload failed: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update dashboard")),
+      );
+    } finally {
+      setState(() => _loadingDashboard = false);
+    }
+  }
+
+  Future<void> _saveParentDataToStorage() async {
+    try {
+      final data = parentData; // getter you already have
+      await InvoiceStorage.saveParentData(data);
+      debugPrint("✅ Parent data saved to storage: $data");
+    } catch (e) {
+      debugPrint("❌ Failed to save parent data: $e");
+    }
+  }
+
   String get img => resolveStudentImageUrl();
   @override
   void initState() {
     super.initState();
+    _saveParentDataToStorage();
+    _dashboardData = widget.dashboardData;
     final data = widget.studentData['data'] ?? {};
 
     final studId = (data['student_id'] ?? "").toString();
@@ -132,6 +212,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
           : const AyClassOption(
               academicYearId: "",
               academicYearName: "",
+              name:"  ",
               classId: "",
               className: "",
               sectionId: "",
@@ -223,6 +304,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
       final classId = (row['class_id'] ?? "").toString();
       final className = (row['class_name'] ?? "").toString();
+      final name = (row['name'] ?? ayObj?['name'] ?? "").toString();
 
       final sectionId = (row['section_id'] ?? "").toString();
       final sectionName = (row['section_name'] ?? "").toString();
@@ -240,6 +322,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         AyClassOption(
           academicYearId: academicYearId,
           academicYearName: academicYearName,
+          name:name,
           classId: classId,
           className: className,
           sectionId: sectionId,
@@ -266,343 +349,369 @@ class _StudentDashboardState extends State<StudentDashboard> {
   @override
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF0E70B8);
-    const Color pageBg = Color(0xFFF6FAFF);
+    const Color pageBg = Color(0xFFEAF4FF);
 
     return Scaffold(
       backgroundColor: pageBg,
+
       drawer: AppDrawer(parentData: parentData),
 
-      // ✅ Common Header
-      appBar: const DashboardAppBar(
+      appBar: SharedAppHead(
         title: "Dashboard",
         showDrawer: true,
         showBack: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-        child: Column(
-          children: [
-            StudentHeaderCard(
-              name: studentName(),
-              studentIdText: studentId(),
-              branchName: branchName(),
-              imageUrl: img, // ✅ use resolved url
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        StudentDetailsPage(studentData: widget.studentData),
-                  ),
-                );
-              },
-            ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              children: [
+                StudentHeaderCard(
+                  name: studentName(),
+                  studentIdText: studentId(),
+                  branchName: branchName(),
+                  imageUrl: img, // ✅ use resolved url
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            StudentDetailsPage(studentData: widget.studentData),
+                      ),
+                    );
+                  },
+                ),
 
-            const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-            // ✅ AY pill full width like screenshot
-            SizedBox(
-              width: double.infinity,
-              child: AyPickerPill(
-                options: _ayOptions,
-                selected: _selectedAy,
-                onSelected: (picked) async {
-                  setState(() {
-                    _selectedAy = picked;
-                    selectedYear = picked.academicYearName;
-                  });
-                  await _saveSelectedAyToStorage();
-                },
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ✅ Fixed tile height like screenshot (no squashed cards)
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: 4,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                mainAxisExtent: 92, // ✅ matches SS height
-              ),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return _statTile(
-                    title: "Attendance",
-                    value: "92%",
-                    topColor: const Color(0xFF2B6DE5),
-                    onTap: () async {
-                      // your existing Attendance onTap 그대로
-                      try {
-                        final opt = _selectedAy;
-                        if (opt == null || opt.academicYearId.isEmpty) {
-                          throw Exception("Please select Academic Year");
-                        }
-
-                        final branchId = student['branch_id']?.toString();
-                        final studId = student['student_id']?.toString();
-                        if (branchId == null || studId == null) {
-                          throw Exception("Missing branchId/studentId");
-                        }
-
-                        final now = DateTime.now();
-                        const months = [
-                          "January",
-                          "February",
-                          "March",
-                          "April",
-                          "May",
-                          "June",
-                          "July",
-                          "August",
-                          "September",
-                          "October",
-                          "November",
-                          "December",
-                        ];
-                        final defaultMonth = months[now.month - 1];
-                        final defaultYear = now.year;
-
-                        final attendanceService = AttendanceService();
-
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()),
-                        );
-
-                        final attendanceApiResponse = await attendanceService
-                            .fetchYearWiseAttendance(
-                              branchId: branchId,
-                              studentId: studId,
-                              academicYearId: opt.academicYearId,
-                              classId: opt.classId,
-                              sectionId: opt.sectionId,
-                              month: defaultMonth,
-                              year: defaultYear,
-                            );
-
-                        Navigator.pop(context);
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AttendancePage(
-                              apiResponse: attendanceApiResponse,
-                              fetchAttendance: (month, year) {
-                                return attendanceService
-                                    .fetchYearWiseAttendance(
-                                      branchId: branchId,
-                                      studentId: studId,
-                                      academicYearId: opt.academicYearId,
-                                      classId: opt.classId,
-                                      sectionId: opt.sectionId,
-                                      month: month,
-                                      year: year,
-                                    );
-                              },
-                            ),
-                          ),
-                        );
-                      } catch (e) {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Failed to load attendance"),
-                          ),
-                        );
-                      }
+                // ✅ AY pill full width like screenshot
+                SizedBox(
+                  width: double.infinity,
+                  child: AyPickerPill(
+                    options: _ayOptions,
+                    selected: _selectedAy,
+                    onSelected: (picked) async {
+                      setState(() {
+                        _selectedAy = picked;
+                        selectedYear = picked.academicYearName;
+                      });
+                      await _saveSelectedAyToStorage();
+                      await _reloadDashboardForSelectedAy();
                     },
-                  );
-                }
+                  ),
+                ),
 
-                if (index == 1) {
-                  return _statTile(
-                    title: "Academics",
-                    value: "86%",
-                    topColor: const Color(0xFFF7C71C),
-                    onTap: () async {
-                      // your existing Academics onTap 그대로
-                      try {
-                        final opt = _selectedAy;
-                        if (opt == null || opt.academicYearId.isEmpty) {
-                          throw Exception("Please select Academic Year");
-                        }
+                const SizedBox(height: 14),
 
-                        final branchId = student['branch_id']?.toString();
-                        final studId = student['student_id']?.toString();
-                        final studentUuid = (opt.studentUuid ?? student['uuid'])
-                            ?.toString();
+                // ✅ Fixed tile height like screenshot (no squashed cards)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: 92, // ✅ matches SS height
+                  ),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return _statTile(
+                        title: "Attendance",
+                        value:
+                            (_dashboardData['attendance']?['percentage'] ?? '0')
+                                .toString() +
+                            "%",
+                        topColor: const Color(0xFF2B6DE5),
+                        onTap: () async {
+                          // your existing Attendance onTap 그대로
+                          try {
+                            final opt = _selectedAy;
+                            if (opt == null || opt.academicYearId.isEmpty) {
+                              throw Exception("Please select Academic Year");
+                            }
 
-                        if (branchId == null ||
-                            studId == null ||
-                            studentUuid == null ||
-                            studentUuid.isEmpty) {
-                          throw Exception("Academic params missing");
-                        }
+                            final branchId = student['branch_id']?.toString();
+                            final studId = student['student_id']?.toString();
+                            if (branchId == null || studId == null) {
+                              throw Exception("Missing branchId/studentId");
+                            }
 
-                        final academicService = AcademicService();
+                            final now = DateTime.now();
+                            const months = [
+                              "January",
+                              "February",
+                              "March",
+                              "April",
+                              "May",
+                              "June",
+                              "July",
+                              "August",
+                              "September",
+                              "October",
+                              "November",
+                              "December",
+                            ];
+                            final defaultMonth = months[now.month - 1];
+                            final defaultYear = now.year;
 
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()),
-                        );
+                            final attendanceService = AttendanceService();
 
-                        final examsRes = await academicService
-                            .fetchStudentExams(
-                              branchId: branchId,
-                              studentUuid: studentUuid,
-                              academicYearId: opt.academicYearId,
-                              classId: opt.classId,
-                              sectionId: opt.sectionId,
-                              latest: true,
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             );
 
-                        final exams = academicService
-                            .extractExamOptionsFromListExams(examsRes);
-
-                        final firstRealExam = exams.firstWhere(
-                          (e) => e.id.isNotEmpty,
-                          orElse: () =>
-                              const ExamOption(id: "", name: "Select Exam"),
-                        );
-
-                        Map<String, dynamic> reportRes = {"data": []};
-                        if (firstRealExam.id.isNotEmpty) {
-                          reportRes = await academicService
-                              .fetchAcademicReports(
-                                branchId: branchId,
-                                studentId: studId,
-                                academicYearId: opt.academicYearId,
-                                classId: opt.classId,
-                                sectionId: opt.sectionId,
-                                examId: firstRealExam.id,
-                                role: "directory",
-                              );
-                        }
-
-                        Navigator.pop(context);
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AcademicPage(
-                              initialReport: reportRes,
-                              exams: exams,
-                              selectedExamId: firstRealExam.id,
-                              onFetchByExamId: (examId) {
-                                return academicService.fetchAcademicReports(
+                            final attendanceApiResponse =
+                                await attendanceService.fetchYearWiseAttendance(
                                   branchId: branchId,
                                   studentId: studId,
                                   academicYearId: opt.academicYearId,
                                   classId: opt.classId,
                                   sectionId: opt.sectionId,
-                                  examId: examId,
-                                  role: "directory",
+                                  month: defaultMonth,
+                                  year: defaultYear,
                                 );
-                              },
-                            ),
-                          ),
-                        );
-                      } catch (e) {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Failed to load academics"),
-                          ),
-                        );
-                      }
-                    },
-                  );
-                }
 
-                if (index == 2) {
-                  return _statTile(
-                    title: "Receipts",
-                    value: "${widget.receiptsAllTotalCount}",
-                    topColor: const Color(0xFF2DBE7C),
-                    onTap: () async {
-                      // your existing Receipts onTap 그대로
-                      try {
-                        final receiptService = ReceiptService();
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()),
-                        );
-
-                        final receiptApiResponse = await receiptService
-                            .fetchReceipts();
-                        Navigator.pop(context);
-
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReceiptsPage(
-                              apiResponse: receiptApiResponse,
-                              branchId: "${student['branch_id']}",
-                            ),
-                          ),
-                        );
-                      } catch (e) {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Failed to load receipts"),
-                          ),
-                        );
-                      }
-                    },
-                  );
-                }
-
-                return _statTile(
-                  title: "Invoices",
-                  value: "4",
-                  topColor: const Color(0xFFFFA726),
-                  onTap: () async {
-                    // your existing Invoices onTap 그대로
-                    try {
-                      final invoiceService = InvoiceService();
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) =>
-                            const Center(child: CircularProgressIndicator()),
-                      );
-
-                      final invoices = await invoiceService
-                          .fetchStudentInvoices();
-                      Navigator.pop(context);
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => InvoicesPage(invoices: invoices),
-                        ),
-                      );
-                    } catch (e) {
-                      if (Navigator.canPop(context)) Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Failed to load invoices"),
-                        ),
+                            Navigator.pop(context);
+                            final attendanceSummary =
+                                _dashboardData['attendance'] ?? {};
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AttendancePage(
+                                  apiResponse: attendanceApiResponse,
+                                  fetchAttendance: (month, year) {
+                                    return attendanceService
+                                        .fetchYearWiseAttendance(
+                                          branchId: branchId,
+                                          studentId: studId,
+                                          academicYearId: opt.academicYearId,
+                                          classId: opt.classId,
+                                          sectionId: opt.sectionId,
+                                          month: month,
+                                          year: year,
+                                        );
+                                  },
+                                  attendanceSummary: attendanceSummary,
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (Navigator.canPop(context))
+                              Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to load attendance"),
+                              ),
+                            );
+                          }
+                        },
                       );
                     }
+
+                    if (index == 1) {
+                      return _statTile(
+                        title: "Academics",
+                        value:
+                            "${_dashboardData['academic_percentage'] ?? '0'}%",
+                        topColor: const Color(0xFFF7C71C),
+                        onTap: () async {
+                          // your existing Academics onTap 그대로
+                          try {
+                            final opt = _selectedAy;
+                            if (opt == null || opt.academicYearId.isEmpty) {
+                              throw Exception("Please select Academic Year");
+                            }
+
+                            final branchId = student['branch_id']?.toString();
+                            final studId = student['student_id']?.toString();
+                            final studentUuid =
+                                (opt.studentUuid ?? student['uuid'])
+                                    ?.toString();
+
+                            if (branchId == null ||
+                                studId == null ||
+                                studentUuid == null ||
+                                studentUuid.isEmpty) {
+                              throw Exception("Academic params missing");
+                            }
+
+                            final academicService = AcademicService();
+
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+
+                            final examsRes = await academicService
+                                .fetchStudentExams(
+                                  branchId: branchId,
+                                  studentUuid: studentUuid,
+                                  academicYearId: opt.academicYearId,
+                                  classId: opt.classId,
+                                  sectionId: opt.sectionId,
+                                  latest: true,
+                                );
+
+                            final exams = academicService
+                                .extractExamOptionsFromListExams(examsRes);
+
+                            final firstRealExam = exams.firstWhere(
+                              (e) => e.id.isNotEmpty,
+                              orElse: () =>
+                                  const ExamOption(id: "", name: "Select Exam"),
+                            );
+
+                            Map<String, dynamic> reportRes = {"data": []};
+                            if (firstRealExam.id.isNotEmpty) {
+                              reportRes = await academicService
+                                  .fetchAcademicReports(
+                                    branchId: branchId,
+                                    studentId: studId,
+                                    academicYearId: opt.academicYearId,
+                                    classId: opt.classId,
+                                    sectionId: opt.sectionId,
+                                    examId: firstRealExam.id,
+                                    role: "directory",
+                                  );
+                            }
+
+                            Navigator.pop(context);
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AcademicPage(
+                                  initialReport: reportRes,
+                                  exams: exams,
+                                  selectedExamId: firstRealExam.id,
+                                  onFetchByExamId: (examId) {
+                                    return academicService.fetchAcademicReports(
+                                      branchId: branchId,
+                                      studentId: studId,
+                                      academicYearId: opt.academicYearId,
+                                      classId: opt.classId,
+                                      sectionId: opt.sectionId,
+                                      examId: examId,
+                                      role: "directory",
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (Navigator.canPop(context))
+                              Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to load academics"),
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    }
+
+                    if (index == 2) {
+                      return _statTile(
+                        title: "Receipts",
+                        value: "${_dashboardData['receipt_count'] ?? '0'}",
+                        topColor: const Color(0xFF2DBE7C),
+                        onTap: () async {
+                          // your existing Receipts onTap 그대로
+                          try {
+                            final receiptService = ReceiptService();
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+
+                            final receiptApiResponse = await receiptService
+                                .fetchReceipts();
+                            Navigator.pop(context);
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReceiptsPage(
+                                  apiResponse: receiptApiResponse,
+                                  branchId: "${student['branch_id']}",
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            if (Navigator.canPop(context))
+                              Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Failed to load receipts"),
+                              ),
+                            );
+                          }
+                        },
+                      );
+                    }
+
+                    return _statTile(
+                      title: "Invoices",
+                      value: "${_dashboardData['invoice_count'] ?? '0'}",
+                      topColor: const Color(0xFFFFA726),
+                      onTap: () async {
+                        // your existing Invoices onTap 그대로
+                        try {
+                          final invoiceService = InvoiceService();
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          final invoices = await invoiceService
+                              .fetchStudentInvoices();
+                          Navigator.pop(context);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => InvoicesPage(invoices: invoices),
+                            ),
+                          );
+                        } catch (e) {
+                          if (Navigator.canPop(context)) Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Failed to load invoices"),
+                            ),
+                          );
+                        }
+                      },
+                    );
                   },
-                );
-              },
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (_loadingDashboard)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.25),
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
 
       bottomNavigationBar: BottomNavigationBar(
@@ -614,22 +723,29 @@ class _StudentDashboardState extends State<StudentDashboard> {
         selectedFontSize: 11,
         unselectedFontSize: 11,
         iconSize: 22,
-        onTap: (index) {
-          setState(() => currentIndex = index);
+       onTap: (index) async {
+          if (index == currentIndex) return;
 
           if (index == 1) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ProfilePage()),
             );
           }
+
           if (index == 2) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AlertsPage()),
             );
           }
+
+          // ✅ Always reset to Home when coming back
+          if (mounted) {
+            setState(() => currentIndex = 0);
+          }
         },
+
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -645,9 +761,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ],
       ),
-
-
-
     );
   }
 
@@ -718,5 +831,4 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
     );
   }
-
 }

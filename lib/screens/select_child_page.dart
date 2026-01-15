@@ -1,13 +1,13 @@
-// lib/screens/select_child_page.dart
-
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
 import 'package:skuteq_app/services/academic_service.dart';
 import 'package:skuteq_app/services/receipt_service.dart';
 import 'student_dashboard.dart';
-import '../services/student_service.dart'; // your existing one
+import '../services/student_service.dart';
 
 class SelectChildPage extends StatefulWidget {
-  final List<dynamic> students; // 👈 DATA FROM LOGIN
+  final List<dynamic> students;
 
   const SelectChildPage({super.key, required this.students});
 
@@ -18,62 +18,78 @@ class SelectChildPage extends StatefulWidget {
 class _SelectChildPageState extends State<SelectChildPage> {
   final StudentService _studentService = StudentService();
 
+  /// ✅ CENTRAL IMAGE RESOLVER
+  String resolveStudentImageUrl(dynamic raw) {
+    if (raw == null) return "";
+
+    String url = raw.toString().trim();
+    if (url.isEmpty) return "";
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    url = url.replaceFirst(RegExp(r'^/+'), '');
+
+    if (url.startsWith("public/")) {
+      return "https://dev-cdn.skuteq.net/$url";
+    }
+
+    return "https://dev-cdn.skuteq.net/public/$url";
+  }
+
+  Future<void> _saveChildrenToStorage() async {
+    try {
+      final List<Map<String, dynamic>> children = widget.students.map((s) {
+        final Map student = s as Map;
+
+        return {
+          "studentDbId": student["_id"]?.toString() ?? "",
+          "studentId": student["student_id"]?.toString() ?? "",
+          "name": student["full_name"]?.toString() ?? "",
+          "className": student["class_name"]?.toString() ?? "",
+          "sectionName": student["section_name"]?.toString() ?? "",
+          "avatarUrl": resolveStudentImageUrl(student["image_url"]),
+        };
+      }).toList();
+
+      await InvoiceStorage.saveLinkedChildren(children);
+
+      debugPrint("✅ Linked children saved (${children.length})");
+    } catch (e) {
+      debugPrint("❌ Failed to save linked children: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _saveChildrenToStorage();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Colors
     const Color primaryBlue = Color(0xFF0B2A4A);
-    const Color pageBg = Color(0xFFF6FAFF);
-    const Color textPrimary = Color(0xFF1A1A1A);
+    const Color pageBg = Color(0xFFEAF4FF);
 
     return Scaffold(
       backgroundColor: pageBg,
+      appBar: SharedAppHead(
+        title: "Welcome",
+        showDrawer: true,
+        showBack: false,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // ---------- HEADER ----------
-            Container(
-              margin: const EdgeInsets.only(top: 20, bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () => Scaffold.of(context).openDrawer(),
-                    child: const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(Icons.menu_rounded, size: 30),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        "Select Student",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 40),
-                ],
-              ),
-            ),
-
-            // ---------- STUDENT LIST ----------
             Expanded(
               child: widget.students.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No students found",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    )
+                  ? const Center(child: Text("No students found"))
                   : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 16,
+                      ),
                       child: ListView.separated(
                         physics: const BouncingScrollPhysics(),
                         itemCount: widget.students.length,
@@ -81,15 +97,17 @@ class _SelectChildPageState extends State<SelectChildPage> {
                         itemBuilder: (context, index) {
                           final student = widget.students[index];
 
+                          final String resolvedImage = resolveStudentImageUrl(
+                            student['image_url'],
+                          );
+
                           return _buildChildCard(
                             studentId: student['_id'] ?? '',
                             name: student['full_name'] ?? 'Unknown',
                             school: student['branch_name'] ?? '',
-                            imagePath:
-                                (student['image_url'] != null &&
-                                    student['image_url'].toString().isNotEmpty)
-                                ? student['image_url']
-                                : 'assets/images/student1.png',
+                            imagePath: resolvedImage.isNotEmpty
+                                ? resolvedImage
+                                : 'assets/icon/profile.png',
                             highlight: false,
                             primaryBlue: primaryBlue,
                           );
@@ -123,6 +141,8 @@ class _SelectChildPageState extends State<SelectChildPage> {
     required bool highlight,
     required Color primaryBlue,
   }) {
+    final bool isNetworkImage = imagePath.startsWith('http');
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -135,52 +155,65 @@ class _SelectChildPageState extends State<SelectChildPage> {
               builder: (_) => const Center(child: CircularProgressIndicator()),
             );
 
-            // ✅ 1) Student details
             final studentData = await _studentService.fetchStudentDetailsById(
               studentId,
             );
 
             final student = studentData['data'] ?? {};
             final String? branchId = student['branch_id']?.toString();
-            final String? studentDbId = student['_id']?.toString(); // Mongo _id
-            final String? studentUuid = (student['uuid'] ?? student['_id'])
-                ?.toString();
+            final String? studentDbId = student['_id']?.toString();
 
-            // ✅ for receipts date range (prefer academic_year else hardcode fallback)
-            final String startDate = "2025-04-01";
-            final String endDate = "2026-03-31";
-
-            if (branchId == null ||
-                studentDbId == null ||
-                studentUuid == null) {
-              throw Exception("Missing branchId or studentDbId or studentUuid");
+            if (branchId == null || studentDbId == null) {
+              throw Exception("Missing identifiers");
             }
 
-            // ✅ 2) AY/Class list
             final academicService = AcademicService();
+
             final ayClassResponse = await academicService.fetchStudentAyClass(
               branchId: branchId,
               studentDbId: studentDbId,
             );
 
-            // ✅ 3) Receipts (only need all_total_count)
-            // final receiptService = ReceiptService();
-            // final receiptsRes = await receiptService.fetchReceipts();
+            // ✅ Extract list safely
+            final ayClassList = ayClassResponse['data'] as List? ?? [];
 
-            final int receiptsAllTotalCount = 18;
-            //     (receiptsRes['all_total_count'] as num?)?.toInt() ?? 0;
+            if (ayClassList.isEmpty) {
+              throw Exception('No AY/Class mapping found');
+            }
 
-            if (Navigator.canPop(context))
-              Navigator.pop(context); // close loader
+            // ✅ Get latest academic year/class
+            final latestAyClass = ayClassList.firstWhere(
+              (item) => item['latest'] == true,
+              orElse: () => ayClassList.first,
+            );
 
-            // ✅ 4) Navigate with all three
+            // ✅ Academic year object
+            final academicYear = latestAyClass['academic_year'] ?? {};
+
+            // ✅ Call dashboard API
+            final dashboardData = await _studentService.fetchStudentDashboard(
+              branchId: branchId,
+              studentId: studentDbId,
+              academicYearId:
+                  academicYear['academic_year_id']?.toString() ?? '',
+              startDate: academicYear['start_date']?.toString() ?? '',
+              endDate: academicYear['end_date']?.toString() ?? '',
+              classId: latestAyClass['class_id']?.toString() ?? '',
+              sectionId: latestAyClass['section_id']?.toString() ?? '',
+            );
+
+            // final int receiptsAllTotalCount = dashboardData['receipt_count'];
+            // final int invoicesAllTotalCount = dashboardData['invoice_count'];
+
+            if (Navigator.canPop(context)) Navigator.pop(context);
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (_) => StudentDashboard(
                   studentData: studentData,
                   ayClassResponse: ayClassResponse,
-                  receiptsAllTotalCount: receiptsAllTotalCount, // ✅ NEW
+                  dashboardData: dashboardData,
                 ),
               ),
             );
@@ -192,7 +225,6 @@ class _SelectChildPageState extends State<SelectChildPage> {
             debugPrint("❌ onTap error: $e");
           }
         },
-
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -226,33 +258,18 @@ class _SelectChildPageState extends State<SelectChildPage> {
                   ),
                 ),
                 child: ClipOval(
-                  child:
-                      (imagePath != null &&
-                          imagePath.toString().isNotEmpty &&
-                          imagePath.toString().startsWith('http'))
+                  child: isNetworkImage
                       ? Image.network(
                           imagePath,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.person,
-                            size: 32,
-                            color: Colors.grey,
-                          ),
+                          errorBuilder: (_, __, ___) => _fallbackAvatar(),
                         )
-                      : Container(
-                          color: Colors.grey[100],
-                          child: const Icon(
-                            Icons.person,
-                            size: 32,
-                            color: Colors.grey,
-                          ),
-                        ),
+                      : Image.asset(imagePath, fit: BoxFit.cover),
                 ),
               ),
 
               const SizedBox(width: 16),
 
-              // Text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +281,6 @@ class _SelectChildPageState extends State<SelectChildPage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-
                     const SizedBox(height: 4),
                     Text(
                       school,
@@ -274,7 +290,6 @@ class _SelectChildPageState extends State<SelectChildPage> {
                 ),
               ),
 
-              // Arrow
               Container(
                 width: 36,
                 height: 36,
@@ -294,4 +309,16 @@ class _SelectChildPageState extends State<SelectChildPage> {
       ),
     );
   }
+
+  Widget _fallbackAvatar() {
+    return Container(
+      color: Colors.grey[100],
+      alignment: Alignment.center,
+      child: const Icon(Icons.person, size: 32, color: Colors.grey),
+    );
+  }
+}
+
+extension on Map<String, dynamic> {
+  get data => null;
 }

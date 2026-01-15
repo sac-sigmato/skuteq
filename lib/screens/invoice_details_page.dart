@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:skuteq_app/components/app_bottom_nav.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 import 'package:skuteq_app/helpers/invoice_pdf_helper.dart';
 
 class InvoiceDetailsPage extends StatelessWidget {
@@ -8,7 +10,7 @@ class InvoiceDetailsPage extends StatelessWidget {
   InvoiceDetailsPage({super.key, required this.apiResponse});
 
   // ---------------- COLORS ----------------
-  static const Color bg = Color(0xFFF6FAFF);
+   static const Color pageBg = Color(0xFFEAF4FF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color muted = Color(0xFF9FA8B2);
   static const Color blue = Color(0xFF2E9EE6);
@@ -40,41 +42,17 @@ class InvoiceDetailsPage extends StatelessWidget {
     final double balanceDue = _parse(data['balance_due']);
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: pageBg,
+      appBar: SharedAppHead(
+        title: "Invoice Details",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: Column(
         children: [
-          const SizedBox(height: 20),
+          
 
-          // HEADER
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Invoice Details",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-          ),
-
-          Container(height: 14, color: bg),
+          Container(height: 14, color: pageBg),
 
           Expanded(
             child: ListView(
@@ -211,6 +189,7 @@ class InvoiceDetailsPage extends StatelessWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 

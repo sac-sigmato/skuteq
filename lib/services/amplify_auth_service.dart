@@ -25,14 +25,25 @@ class AmplifyAuthService {
     // ✅ Correct way to read JWT string
     final jwt = idToken.raw.trim();
 
-    safePrint('🆔 JWT length: ${jwt.length}');
-    safePrint('🆔 JWT preview: ${jwt.substring(0, 25)}...');
+    // safePrint('🆔 JWT length: ${jwt.length}');
+    // safePrint('🆔 JWT preview: ${jwt.substring(0, 25)}...');
 
     return jwt;
   }
 
   Future<void> signOut() async {
-    await Amplify.Auth.signOut();
+    try {
+      // print("🔐 Logout started...");
+
+      await Amplify.Auth.signOut();
+
+      // print("✅ Logout successful: User signed out from Amplify");
+    } catch (e, stackTrace) {
+      print("❌ Logout failed");
+      print("Error: $e");
+      print("StackTrace: $stackTrace");
+
+      rethrow; // important so caller can handle failure
+    }
   }
-  
 }

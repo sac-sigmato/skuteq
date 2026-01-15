@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/app_bottom_nav.dart';
+import 'package:skuteq_app/components/shared_app_head.dart';
 import 'package:skuteq_app/helpers/invoice_storage.dart';
-
+import 'package:skuteq_app/screens/alerts_page.dart';
+import 'package:skuteq_app/screens/profile_page.dart';
 
 class AttendancePage extends StatefulWidget {
   /// initial month data (current month ideally)
   final Map<String, dynamic> apiResponse;
+  final Map<String, dynamic> attendanceSummary;
 
   /// ✅ Pass your fetch function from service
   /// Example:
@@ -16,6 +20,7 @@ class AttendancePage extends StatefulWidget {
     super.key,
     required this.apiResponse,
     required this.fetchAttendance,
+    required this.attendanceSummary,
   });
 
   @override
@@ -23,8 +28,12 @@ class AttendancePage extends StatefulWidget {
 }
 
 class _AttendancePageState extends State<AttendancePage> {
+  double _storedPercentage = 0;
+  int _storedPresentDays = 0;
+  int _storedTotalDays = 0;
+
   // ---------------- COLORS ----------------
-  static const Color pageBg = Color(0xFFF6FAFF);
+  static const Color pageBg = Color(0xFFEAF4FF);
   static const Color cardBg = Colors.white;
 
   static const Color presentColor = Color(0xFF46B670);
@@ -37,7 +46,7 @@ class _AttendancePageState extends State<AttendancePage> {
   static const Color borderColor = Color(0xFFE6EEF6);
   // --------------------------------------------------
 
-   Map<String, dynamic> _attendance = {};
+  Map<String, dynamic> _attendance = {};
 
   static const List<String> _months = [
     "January",
@@ -73,8 +82,33 @@ class _AttendancePageState extends State<AttendancePage> {
   @override
   void initState() {
     super.initState();
+
+    final summary = widget.attendanceSummary;
+
+    _storedTotalDays = (summary['total_days'] as num?)?.toInt() ?? 0;
+
+    _storedPresentDays = (summary['total_present'] as num?)?.round() ?? 0;
+
+    _storedPercentage = (summary['percentage'] as num?)?.toDouble() ?? 0;
+
     _attendance = _mapApiToUi(widget.apiResponse);
     _initAyLimit();
+  }
+
+  Future<void> _loadAttendanceDays() async {
+    final percentage = await InvoiceStorage.getAttendancePercentage();
+    final present = await InvoiceStorage.getAttendancePresentDays();
+    final total = await InvoiceStorage.getAttendanceTotalDays();
+
+    if (!mounted) return;
+
+    setState(() {
+      _storedPercentage = percentage;
+      _storedPresentDays = present;
+      _storedTotalDays = total;
+    });
+
+    debugPrint("Attendance from storage: $percentage% ($present / $total)");
   }
 
   Future<void> _initAyLimit() async {
@@ -212,16 +246,19 @@ class _AttendancePageState extends State<AttendancePage> {
     _fetchAndApply(next);
   }
 
-
   // ---------------- BUILD ----------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: pageBg,
+      appBar: SharedAppHead(
+        title: "Attendance",
+        showDrawer: false,
+        showBack: true,
+      ),
       body: Column(
         children: [
-          _header(),
           const SizedBox(height: 14),
           Expanded(
             child: SingleChildScrollView(
@@ -238,44 +275,16 @@ class _AttendancePageState extends State<AttendancePage> {
           ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 
-  // ---------------- HEADER ----------------
-
-  Widget _header() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(8, 14, 8, 14),
-      margin: const EdgeInsets.only(top: 20),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: () => Navigator.pop(context),
-            ),
-            const Expanded(
-              child: Center(
-                child: Text(
-                  "Attendance",
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            const SizedBox(width: 48),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ---------------- OVERALL CARD ----------------
 
   Widget _overallAttendanceCard() {
-    final double present = _attendance['presentDays'];
-    final int total = _attendance['totalDays'];
+    final double present = _storedPresentDays.toDouble();
+    final int total = _storedTotalDays;
     final double progress = total == 0 ? 0 : present / total;
 
     return Container(
@@ -317,12 +326,12 @@ class _AttendancePageState extends State<AttendancePage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _attendance['attendancePercent'],
+                  "${_storedPercentage.toStringAsFixed(0)}%",
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
               Text(
-                "${present % 1 == 0 ? present.toInt() : present} / $total days",
+                "$present / $total days",
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black54,
@@ -378,8 +387,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
   Widget _calendarHeader() {
     final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);
-final bool nextDisabled = _isFutureMonth(nextMonth) || _isLoading;
-
+    final bool nextDisabled = _isFutureMonth(nextMonth) || _isLoading;
 
     final bool prevDisabled = _isLoading;
 
