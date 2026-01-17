@@ -7,6 +7,7 @@ import '../services/student_service.dart';
 
 import 'reset_password_page.dart';
 import 'select_child_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,18 +29,25 @@ class _LoginPageState extends State<LoginPage> {
   int _currentStep = 0;
   bool _isPasswordVisible = false;
 
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.\w+$');
+    return emailRegex.hasMatch(email);
+  }
+
+
   @override
   Widget build(BuildContext context) {
-   const Color pageBg = Color(0xFFEAF4FF);
+    const Color pageBg = Color(0xFFEAF4FF);
     return Scaffold(
       backgroundColor: pageBg,
 
       // ✅ Common Header
       appBar: SharedAppHead(
-        title: "Sign In",
+        title: _currentStep == 0 ? "Sign In" : "Enter Password",
         showDrawer: false,
         showBack: true,
       ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
@@ -70,16 +78,15 @@ class _LoginPageState extends State<LoginPage> {
 
   // ---------------- EMAIL STEP ----------------
 
-  Widget _buildEmailStep() {
+ Widget _buildEmailStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         /// LOGO
         Center(child: Image.asset("assets/images/logo.png", height: 36)),
-
         const SizedBox(height: 24),
 
-        /// CARD CONTAINER (INPUT + BUTTON)
+        /// CARD
         Container(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
           margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -96,6 +103,11 @@ class _LoginPageState extends State<LoginPage> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(fontWeight: FontWeight.w800),
+                onChanged: (_) {
+                  if (_errorMessage != null) {
+                    setState(() => _errorMessage = null);
+                  }
+                },
                 decoration: _inputDecoration(
                   hint: "Email",
                   icon: Icons.email_outlined,
@@ -108,7 +120,28 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () => setState(() => _currentStep = 1),
+                  onPressed: () {
+                    final email = _emailController.text.trim();
+
+                    if (email.isEmpty) {
+                      setState(() {
+                        _errorMessage = "Email is required";
+                      });
+                      return;
+                    }
+
+                    if (!_isValidEmail(email)) {
+                      setState(() {
+                        _errorMessage = "Please enter a valid email address";
+                      });
+                      return;
+                    }
+
+                    setState(() {
+                      _errorMessage = null;
+                      _currentStep = 1;
+                    });
+                  },
                   style: _buttonStyle(),
                   child: const Text(
                     "Next",
@@ -123,6 +156,21 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
+
+        /// ✅ ERROR MESSAGE (THIS WAS MISSING)
+        if (_errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -221,9 +269,12 @@ class _LoginPageState extends State<LoginPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ResetPasswordPage(),
+                        builder: (_) => ForgotPasswordPage(
+                          email: _emailController.text.trim(),
+                        ),
                       ),
                     );
+
                   },
                   child: const Text(
                     "Forgot Password?",
@@ -311,8 +362,23 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       if (!mounted) return;
+
+      String message = "Something went wrong. Please try again.";
+
+      final error = e.toString().toLowerCase();
+
+      if (error.contains("not authorized") ||
+          error.contains("incorrect") ||
+          error.contains("invalid")) {
+        message = "Incorrect password or email. Please try again.";
+      } else if (error.contains("user not found")) {
+        message = "No account found with this email.";
+      } else if (error.contains("network")) {
+        message = "Network error. Check your internet connection.";
+      }
+
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception:', '').trim();
+        _errorMessage = message;
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
