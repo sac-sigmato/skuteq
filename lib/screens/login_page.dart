@@ -45,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: SharedAppHead(
         title: _currentStep == 0 ? "Sign In" : "Enter Password",
         showDrawer: false,
-        showBack: true,
+        showBack: false,
       ),
 
       body: SafeArea(
@@ -244,7 +244,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: const TextStyle(fontWeight: FontWeight.w800),
                 decoration: _inputDecoration(
                   hint: "Password",
-                  icon: Icons.lock_outline,
+                  iconAsset: "assets/images/lock.png", // ✅ PNG icon
                   suffix: IconButton(
                     icon: Icon(
                       _isPasswordVisible
@@ -258,6 +258,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+
 
               const SizedBox(height: 8),
 
@@ -349,17 +350,28 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception("Invalid email or password");
       }
 
-      final students = await _studentService.fetchStudents();
+   final Map<String, dynamic> response = await _studentService
+          .fetchStudents();
 
-      // ✅ THIS IS CORRECT
+      /// ✅ SAVE ONLY PARENT OBJECT
+      await InvoiceStorage.saveParentOnly(
+        Map<String, dynamic>.from(response["parent"]),
+      );
+
+      /// ✅ SAVE STUDENTS
+      final List<Map<String, dynamic>> students =
+          List<Map<String, dynamic>>.from(response["students"]);
+
       await InvoiceStorage.saveStudentsData(students);
 
       if (!mounted) return;
 
+      /// ✅ NOW NAVIGATION WILL WORK
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => SelectChildPage(students: students)),
       );
+
     } catch (e) {
       if (!mounted) return;
 
@@ -389,24 +401,38 @@ class _LoginPageState extends State<LoginPage> {
 
   InputDecoration _inputDecoration({
     required String hint,
-    required IconData icon,
+    IconData? icon,
+    String? iconAsset,
     Widget? suffix,
   }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, size: 20),
+
+      /// LEFT ICON (PNG or Material)
+      prefixIcon: iconAsset != null
+          ? Padding(
+              padding: const EdgeInsets.all(12),
+              child: Image.asset(iconAsset, width: 20, height: 20),
+            )
+          : icon != null
+          ? Icon(icon, size: 20)
+          : null,
+
+      /// RIGHT ICON
       suffixIcon: suffix,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFE7EFF7), width: 1.4),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE0E6EF)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF0E70B8), width: 1.4),
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFF1F6FDB)),
       ),
     );
   }
+
 
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(

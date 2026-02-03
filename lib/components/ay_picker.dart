@@ -228,9 +228,9 @@ DateTime? _tryParseDate(String? s) {
                     child: Text(
                       _displayLine(opt), // ✅ single line format
                       style: const TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: Color(0xFF0B2A4A),
+                        color: Colors.black,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -303,10 +303,17 @@ DateTime? _tryParseDate(String? s) {
       onTap: () => _openMenu(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
+         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: const Color(0xFFE6EEF6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -314,8 +321,8 @@ DateTime? _tryParseDate(String? s) {
               child: Text(
                 line.isNotEmpty ? line : placeholder,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

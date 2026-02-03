@@ -31,7 +31,6 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
 
   bool get _isOpen => _entry != null;
 
-  // ✅ remove "Select Exam" placeholder from menu list
   List<ExamOption> get _menuExams =>
       widget.exams.where((e) => e.id.trim().isNotEmpty).toList();
 
@@ -48,6 +47,8 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
 
   void _toggle() {
     if (widget.disabled) return;
+    if (widget.exams.isEmpty) return;
+
     if (_isOpen) {
       _remove();
     } else {
@@ -66,17 +67,16 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
     final size = box.size;
 
     _entry = OverlayEntry(
-      builder: (ctx) {
+      builder: (_) {
         return Stack(
           children: [
-            // tap outside to close
             Positioned.fill(
               child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
                 onTap: () {
                   _remove();
                   setState(() {});
                 },
-                behavior: HitTestBehavior.translucent,
                 child: const SizedBox(),
               ),
             ),
@@ -88,7 +88,7 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  width: size.width, // ✅ match field width
+                  width: size.width,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -104,7 +104,7 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // ✅ header inside dropdown
+                      // 🔹 HEADER (only in open state)
                       Container(
                         height: 54,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -132,7 +132,7 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
                         ),
                       ),
 
-                      // ✅ list (no "Select Exam" row)
+                      // 🔹 LIST
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 320),
                         child: ListView.builder(
@@ -145,7 +145,6 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
 
                             return InkWell(
                               onTap: () {
-                                if (e.id.trim().isEmpty) return; // extra safety
                                 widget.onSelected(e);
                                 _remove();
                                 setState(() {});
@@ -187,14 +186,12 @@ class _ExamTypeDropdownState extends State<ExamTypeDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final fieldText = widget.selectedExamId.trim().isEmpty
-        ? "Select Exam"
-        : widget.selectedExamName;
+    final fieldText = widget.selectedExamName.trim();
 
     return CompositedTransformTarget(
       link: _layerLink,
       child: InkWell(
-        onTap: _toggle,
+        onTap: (widget.disabled || widget.exams.isEmpty) ? null : _toggle,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           height: 54,

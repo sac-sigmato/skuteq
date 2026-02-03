@@ -81,7 +81,7 @@ class ProfilePage extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: _pageBg,
-          
+
           // ✅ Common Header
           appBar: SharedAppHead(
             title: "My Profile",

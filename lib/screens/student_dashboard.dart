@@ -1,4 +1,7 @@
+
+
 import 'package:flutter/material.dart';
+import 'package:skuteq_app/components/app_bottom_nav.dart';
 import 'package:skuteq_app/components/ay_picker.dart';
 import 'package:skuteq_app/components/student_header_card.dart';
 import 'package:skuteq_app/helpers/invoice_storage.dart';
@@ -392,13 +395,24 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     options: _ayOptions,
                     selected: _selectedAy,
                     onSelected: (picked) async {
+                      // ✅ If same AY + class + section → DO NOTHING
+                      if (_selectedAy != null &&
+                          _selectedAy!.academicYearId ==
+                              picked.academicYearId &&
+                          _selectedAy!.classId == picked.classId &&
+                          _selectedAy!.sectionId == picked.sectionId) {
+                        return; // 🔥 no fetch, no loading
+                      }
+
                       setState(() {
                         _selectedAy = picked;
                         selectedYear = picked.academicYearName;
                       });
+
                       await _saveSelectedAyToStorage();
                       await _reloadDashboardForSelectedAy();
                     },
+
                   ),
                 ),
 
@@ -707,60 +721,15 @@ class _StudentDashboardState extends State<StudentDashboard> {
           if (_loadingDashboard)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.25),
+                // color: Colors.black.withOpacity(0.25),
                 child: const Center(child: CircularProgressIndicator()),
               ),
             ),
         ],
       ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: const Color(0xFF9AA6B2),
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        iconSize: 22,
-       onTap: (index) async {
-          if (index == currentIndex) return;
+      bottomNavigationBar: AppBottomNav(currentIndex: currentIndex),
 
-          if (index == 1) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
-            );
-          }
-
-          if (index == 2) {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AlertsPage()),
-            );
-          }
-
-          // ✅ Always reset to Home when coming back
-          if (mounted) {
-            setState(() => currentIndex = 0);
-          }
-        },
-
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_none),
-            label: "Alerts",
-          ),
-        ],
-      ),
     );
   }
 
@@ -808,18 +777,19 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF3B4A5A),
-                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       value,
                       style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0B2E4E),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        //  height: 1.0,
                       ),
                     ),
                   ],

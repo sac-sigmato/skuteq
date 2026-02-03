@@ -17,6 +17,8 @@ class SelectChildPage extends StatefulWidget {
 
 class _SelectChildPageState extends State<SelectChildPage> {
   final StudentService _studentService = StudentService();
+  String _parentName = "Welcome";
+
 
   /// ✅ CENTRAL IMAGE RESOLVER
   String resolveStudentImageUrl(dynamic raw) {
@@ -61,10 +63,24 @@ class _SelectChildPageState extends State<SelectChildPage> {
     }
   }
 
+  Future<void> _loadParentName() async {
+    final name = await InvoiceStorage.getParentFirstName();
+    if (mounted) {
+      setState(() {
+        _parentName = name != null && name.isNotEmpty
+            ? "Welcome $name"
+            : "Welcome";
+      });
+    }
+  }
+ 
+
+
   @override
   void initState() {
     super.initState();
     _saveChildrenToStorage();
+     _loadParentName();
   }
 
   @override
@@ -75,7 +91,7 @@ class _SelectChildPageState extends State<SelectChildPage> {
     return Scaffold(
       backgroundColor: pageBg,
       appBar: SharedAppHead(
-        title: "Welcome",
+          title: _parentName,
         showDrawer: true,
         showBack: false,
       ),

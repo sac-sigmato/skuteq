@@ -19,37 +19,37 @@ class StudentHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        height: 168, // 🔥 BIGGER like SS
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        height: 175, // slightly taller for big avatar
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 0),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0C5C97), Color(0xFF0C5C97)],
-          ),
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF0C5C97),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.12),
               blurRadius: 16,
-              offset: const Offset(0, 10),
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            /// ✅ BIG PERFECT CIRCLE AVATAR
             _Avatar(
               imageUrl: imageUrl,
-              size: 118, // 🔥 BIG PROFILE
-              borderWidth: 5, // 🔥 THICK RING
+              size: 145, // 🔥 BIGGER
+              borderWidth: 2,
               borderColor: Colors.white,
             ),
-            const SizedBox(width: 16),
+
+            const SizedBox(width: 20),
+
+            /// ✅ TEXT CONTENT
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -61,27 +61,27 @@ class StudentHeaderCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20, // slightly bigger
-                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "ID $studentIdText",
                     style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
+                      color: Colors.white,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     branchName,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
+                      color: Colors.white,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -96,9 +96,8 @@ class StudentHeaderCard extends StatelessWidget {
 }
 
 /* ============================================================
-   Embedded Avatar Widget (same file)
+   Avatar Widget — FIXED (NO OVAL EVER)
 ============================================================ */
-
 class _Avatar extends StatelessWidget {
   final String imageUrl;
   final double size;
@@ -107,8 +106,8 @@ class _Avatar extends StatelessWidget {
 
   const _Avatar({
     required this.imageUrl,
-    this.size = 108,
-    this.borderWidth = 3,
+    this.size = 145,
+    this.borderWidth = 2,
     this.borderColor = Colors.white,
   });
 
@@ -131,12 +130,15 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolved = resolveStudentImageUrl(imageUrl);
 
+    final double innerSize = size - (borderWidth * 2);
+
     return Container(
       width: size,
       height: size,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor, width: borderWidth),
+        color: borderColor, // ✅ visible border
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -146,23 +148,25 @@ class _Avatar extends StatelessWidget {
         ],
       ),
       child: ClipOval(
-        child: resolved.isNotEmpty
-            ? Image.network(
-                resolved,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _fallback(); // 👈 YOUR fallback avatar
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
-                  );
-                },
-              )
-            : _fallback(),
+        child: SizedBox(
+          width: innerSize,
+          height: innerSize,
+          child: resolved.isNotEmpty
+              ? Image.network(
+                  resolved,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _fallback(),
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      color: Colors.grey.shade200,
+                      alignment: Alignment.center,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                )
+              : _fallback(),
+        ),
       ),
     );
   }
@@ -171,7 +175,7 @@ class _Avatar extends StatelessWidget {
     return Container(
       color: Colors.grey.shade200,
       alignment: Alignment.center,
-      child: const Icon(Icons.person, size: 48, color: Colors.grey),
+      child: const Icon(Icons.person, size: 44, color: Colors.grey),
     );
   }
 }

@@ -5,43 +5,30 @@ import 'amplify_auth_service.dart';
 class StudentService {
   final AmplifyAuthService _authService = AmplifyAuthService();
   // Fetch Students
-  Future<List<dynamic>> fetchStudents() async {
+ Future<Map<String, dynamic>> fetchStudents() async {
     final token = await _authService.getIdToken();
     if (token == null) {
       throw Exception('token not available');
     }
 
-    final url = 'https://apis-dev.skuteq.net/v1/students/list-students';
-    final uri = Uri.parse(url);
+    final uri = Uri.parse(
+      'https://apis-dev.skuteq.net/v1/students/list-students',
+    );
 
-    // 🔍 LOG EVERYTHING
-    // print('📡 API URL: $url');
-    // print('🔐 Authorization: Bearer ${token}');
-    // print('📦 Headers OK');
+    final response = await http.get(
+      uri,
+      headers: {'Authorization': token, 'Content-Type': 'application/json'},
+    );
 
-    late http.Response response;
-
-    try {
-      response = await http.get(
-        uri,
-        headers: {'Authorization': token, 'Content-Type': 'application/json'},
-      );
-    } catch (e) {
-      print('❌ FETCH ERROR (WEB): $e');
-      rethrow;
-    }
-
-    // print('📥 Status Code: ${response.statusCode}');
-    // print('📥 Raw Response: ${response.body}');
+    print('📥 Raw Response: ${response.body}');
 
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      // print('✅ Decoded Response: $decoded');
-      return decoded['students'] ?? [];
+      return jsonDecode(response.body) as Map<String, dynamic>;
     }
 
     throw Exception('Unauthorized');
   }
+
 
   // Fetch Student Details
   Future<Map<String, dynamic>> fetchStudentDetailsById(String studentId) async {

@@ -53,6 +53,29 @@ class InvoiceStorage {
     await prefs.setString(_parentDataKey, jsonEncode(parentData));
   }
 
+  static const _parentKey = "parent_data";
+
+  static Future<void> saveParentOnly(Map<String, dynamic> parent) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_parentKey, jsonEncode(parent));
+  }
+
+static Future<Map<String, dynamic>?> getParentOnly() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_parentKey);
+
+    if (data == null) return null;
+
+    return jsonDecode(data) as Map<String, dynamic>;
+  }
+
+
+static Future<String?> getParentFirstName() async {
+    final parent = await getParentOnly();
+    return parent?["first_name"]?.toString();
+  }
+
+
   static Future<Map<String, dynamic>?> getParentData() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_parentDataKey);

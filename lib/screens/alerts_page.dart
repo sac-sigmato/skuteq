@@ -1,54 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:skuteq_app/components/shared_app_head.dart';
+import 'package:skuteq_app/services/alerts_service.dart';
+import 'package:skuteq_app/helpers/invoice_storage.dart';
 
-class AlertsPage extends StatelessWidget {
+
+class AlertsPage extends StatefulWidget {
   const AlertsPage({super.key});
 
-  /// 🔹 JSON-based alerts (replace later with API response)
-  static final List<Map<String, String>> _alerts = [
-    {
-      "title": "Invoice Generated",
-      "message": "April Tuition invoice INV-2045 is now available.",
-      "time": "Today • 9:20 AM",
-      "icon": "invoice",
-    },
-    {
-      "title": "Payment Received",
-      "message": "₹8,500 received for INV-2038. Thank you!",
-      "time": "Yesterday • 4:05 PM",
-      "icon": "payment",
-    },
-    {
-      "title": "Marked Absent",
-      "message": "Aarav was marked absent on 12 Apr 2025.",
-      "time": "2 days ago • 8:15 AM",
-      "icon": "absent",
-    },
-    {
-      "title": "Academic Records Added",
-      "message": "Term 1 English scores have been published.",
-      "time": "3 days ago • 6:40 PM",
-      "icon": "academic",
-    },
-    {
-      "title": "Marked Absent",
-      "message": "Late entry recorded. Attendance updated to half-day.",
-      "time": "Last week • 10:05 AM",
-      "icon": "absent",
-    },
-    {
-      "title": "Invoice Generated",
-      "message": "Transport fee invoice TR-554 issued.",
-      "time": "Last week • 9:10 AM",
-      "icon": "invoice",
-    },
-  ];
+  @override
+  State<AlertsPage> createState() => _AlertsPageState();
+}
 
-  // 🎨 Colors matching SS
+class _AlertsPageState extends State<AlertsPage> {
+  final AlertsService _alertsService = AlertsService();
+
+  bool _loading = true;
+  List<AlertItem> _alerts = [];
+  String? _error;
+
+  // TODO: replace these with real values from dashboard/session
+  final String studentId = "682d99cb3d289d109e9b564b";
+  final String branchId = "6662dc0b43a130a8011cf306";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAlerts();
+  }
+
+  Future<void> _loadAlerts() async {
+    try {
+      final studentId = await InvoiceStorage.getStudent_Id();
+      final branchId = await InvoiceStorage.getBranchId();
+
+      if (studentId == null || branchId == null) {
+        throw Exception("Student or Branch ID not found");
+      }
+
+      final data = await _alertsService.fetchStudentAlerts(
+        studentId: studentId,
+        branchId: branchId,
+      );
+
+      setState(() {
+        _alerts = data;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+
+  // 🎨 Colors (unchanged)
   static const Color _pageBg = Color(0xFFEAF4FF);
-  static const Color _headerBg = Color(0xFFEAF4FF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
-  static const Color _titleBlue = Color(0xFF244A6A);
   static const Color _muted = Color(0xFF9FA8B2);
   static const Color _iconBg = Color(0xFFEFF6FF);
 
@@ -56,32 +65,45 @@ class AlertsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _pageBg,
-
-      // ✅ Common Header
       appBar: SharedAppHead(title: "Alerts", showDrawer: false, showBack: true),
+
       body: Column(
         children: [
-          Container(height: 14),
+          const SizedBox(height: 14),
 
-          /// 🔹 ALERTS LIST
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              itemCount: _alerts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final alert = _alerts[index];
-                return _alertCard(alert);
-              },
-            ),
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  )
+                : _alerts.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No alerts available",
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: _alerts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _alertCard(_alerts[index]);
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 
-  /// 🔹 Single Alert Card
-  Widget _alertCard(Map<String, String> alert) {
+  /// 🔹 Single Alert Card (same UI)
+  Widget _alertCard(AlertItem alert) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -99,7 +121,6 @@ class AlertsPage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Icon
           Container(
             width: 40,
             height: 40,
@@ -108,18 +129,15 @@ class AlertsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(50),
               border: Border.all(color: _cardBorder),
             ),
-            child: Icon(_iconFor(alert['icon']), size: 20, color: Colors.black),
+            child: Icon(_iconFor(alert.type), size: 20, color: Colors.black),
           ),
-
           const SizedBox(width: 12),
-
-          /// Text Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  alert['title'] ?? '',
+                  alert.title,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -128,7 +146,7 @@ class AlertsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  alert['message'] ?? '',
+                  alert.message,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Colors.black,
@@ -137,7 +155,7 @@ class AlertsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  alert['time'] ?? '',
+                  alert.time,
                   style: const TextStyle(
                     fontSize: 11,
                     color: _muted,
@@ -152,8 +170,7 @@ class AlertsPage extends StatelessWidget {
     );
   }
 
-  /// 🔹 Icon mapper
-  IconData _iconFor(String? type) {
+  IconData _iconFor(String type) {
     switch (type) {
       case 'invoice':
         return Icons.receipt_long;

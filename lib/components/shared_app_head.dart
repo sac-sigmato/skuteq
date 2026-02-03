@@ -63,11 +63,15 @@ class SharedAppHead extends StatelessWidget implements PreferredSizeWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
+                    // fontFamily: 'Inter', // ✅ important
                     fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    fontWeight: FontWeight.w600, // SemiBold
+                    height: 20 / 18, // line-height / font-size
+                    letterSpacing: 0,
+                    color: Colors.black,
                   ),
                 ),
+
               ),
             ),
             trailing != null

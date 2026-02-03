@@ -52,7 +52,7 @@ class _AcademicPageState extends State<AcademicPage> {
 
     final selected = _exams.firstWhere(
       (e) => e.id == _selectedExamId,
-      orElse: () => const ExamOption(id: "", name: "Select Exam"),
+      orElse: () => const ExamOption(id: "", name: ""),
     );
     _selectedExamName = selected.name;
 

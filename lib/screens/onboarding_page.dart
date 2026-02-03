@@ -112,9 +112,32 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
 
+            /// 🔘 PAGE INDICATOR (OUTSIDE LOOP)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  pages.length,
+                  (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: _index == i
+                          ? const Color(0xFF000000)
+                          : const Color(0xFFD6DEEA),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             /// ✅ FIXED SIGN IN BUTTON (OUTSIDE LOOP)
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
               child: SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -217,28 +240,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             );
           }).toList(),
-
-          const SizedBox(height: 10),
-
-          /// DOTS
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              pages.length,
-              (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: _index == i
-                      ? const Color(0xFF000000)
-                      : const Color(0xFFD6DEEA),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
