@@ -33,7 +33,7 @@ class _AttendancePageState extends State<AttendancePage> {
   int _storedTotalDays = 0;
 
   // ---------------- COLORS ----------------
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBg = Colors.white;
 
   static const Color presentColor = Color(0xFF46B670);
@@ -327,15 +327,19 @@ class _AttendancePageState extends State<AttendancePage> {
                 ),
                 child: Text(
                   "${_storedPercentage.toStringAsFixed(0)}%",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Text(
                 "$present / $total days",
                 style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -396,7 +400,7 @@ class _AttendancePageState extends State<AttendancePage> {
       children: [
         Text(
           "${_monthName(_focusedDay.month)} ${_focusedDay.year}",
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         Row(
           children: [
@@ -422,8 +426,8 @@ class _AttendancePageState extends State<AttendancePage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: Container(
-        width: 32,
-        height: 32,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
           border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(30),
@@ -451,7 +455,7 @@ class _AttendancePageState extends State<AttendancePage> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF8A94A6),
+                  color: Color(0xFF7A8AAA),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -517,11 +521,11 @@ class _AttendancePageState extends State<AttendancePage> {
     }
 
     return Container(
-      width: 40,
-      height: 40,
+      width: 41,
+      height: 41,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: status == null ? borderColor : Colors.transparent,
         ),
@@ -530,9 +534,9 @@ class _AttendancePageState extends State<AttendancePage> {
         child: Text(
           "$day",
           style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
-            color: text,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+            color: Colors.black,
           ),
         ),
       ),

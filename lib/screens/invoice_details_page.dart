@@ -10,7 +10,7 @@ class InvoiceDetailsPage extends StatelessWidget {
   InvoiceDetailsPage({super.key, required this.apiResponse});
 
   // ---------------- COLORS ----------------
-   static const Color pageBg = Color(0xFFEAF4FF);
+   static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color muted = Color(0xFF9FA8B2);
   static const Color blue = Color(0xFF2E9EE6);

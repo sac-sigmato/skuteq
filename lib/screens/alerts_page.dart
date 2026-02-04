@@ -56,7 +56,7 @@ class _AlertsPageState extends State<AlertsPage> {
 
 
   // 🎨 Colors (unchanged)
-  static const Color _pageBg = Color(0xFFEAF4FF);
+  static const Color _pageBg = Color(0xFFF6FAFF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
   static const Color _muted = Color(0xFF9FA8B2);
   static const Color _iconBg = Color(0xFFEFF6FF);

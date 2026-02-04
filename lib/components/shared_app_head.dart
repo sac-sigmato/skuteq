@@ -54,7 +54,29 @@ class SharedAppHead extends StatelessWidget implements PreferredSizeWidget {
         margin: EdgeInsets.only(top: topMargin, bottom: bottomMargin),
         padding: padding,
         height: height,
-        color: Colors.white,
+        decoration: BoxDecoration(
+          color: Colors.white,
+
+          // 🔹 Soft bottom blur
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+
+          // 🔹 Sharp blue bottom line
+          border: Border(
+            bottom: BorderSide(
+              color: const Color(
+                0xFF2F80ED,
+              ).withOpacity(0.2), // blue with opacity
+              width: 1,
+            ),
+          ),
+        ),
+
         child: Row(
           children: [
             leading,
@@ -71,7 +93,6 @@ class SharedAppHead extends StatelessWidget implements PreferredSizeWidget {
                     color: Colors.black,
                   ),
                 ),
-
               ),
             ),
             trailing != null

@@ -7,7 +7,7 @@ class AboutSkuteqPage extends StatelessWidget {
   static const Color cardBorder = Color(0xFFE7EFF7);
   static const Color titleBlue = Color(0xFF244A6A);
   static const Color muted = Color(0xFF8B9BB0);
-  static const Color pillBg = Color(0xFFEAF4FF);
+  static const Color pillBg = Color(0xFFF6FAFF);
   static const Color actionBlue = Color(0xFF2E9EE6);
   static const Color iconBg = Color(0xFFF0F7FF);
 
@@ -330,7 +330,7 @@ class _VersionChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Color(0xFFEAF4FF),
+        color: Color(0xFFF6FAFF),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -89,7 +89,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +114,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
             /// 🔘 PAGE INDICATOR (OUTSIDE LOOP)
             Padding(
-              padding: const EdgeInsets.only(bottom: 100),
+              padding: const EdgeInsets.only(bottom: 150),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -161,8 +161,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   child: const Text(
                     "Sign in",
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -202,14 +202,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEAF4FF),
+                      color: const Color(0xFFF6FAFF),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Image.asset(f["iconAsset"], width: 18, height: 18),
+                      child: Image.asset(f["iconAsset"], width: 30, height: 30),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -220,15 +220,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         Text(
                           f["title"],
                           style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           f["desc"],
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
                             color: Color(0xFF7A8CA5),
                             height: 1.4,
                           ),

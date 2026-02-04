@@ -34,10 +34,9 @@ class _LoginPageState extends State<LoginPage> {
     return emailRegex.hasMatch(email);
   }
 
-
   @override
   Widget build(BuildContext context) {
-    const Color pageBg = Color(0xFFEAF4FF);
+    const Color pageBg = Color(0xFFF6FAFF);
     return Scaffold(
       backgroundColor: pageBg,
 
@@ -78,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
 
   // ---------------- EMAIL STEP ----------------
 
- Widget _buildEmailStep() {
+  Widget _buildEmailStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -92,25 +91,44 @@ class _LoginPageState extends State<LoginPage> {
           margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE7EFF7), width: 1),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              /// EMAIL INPUT
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-                onChanged: (_) {
-                  if (_errorMessage != null) {
-                    setState(() => _errorMessage = null);
-                  }
-                },
-                decoration: _inputDecoration(
-                  hint: "Email",
-                  icon: Icons.email_outlined,
+              /// EMAIL INPUT (WITH ITS OWN SHADOW)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  onChanged: (_) {
+                    if (_errorMessage != null) {
+                      setState(() => _errorMessage = null);
+                    }
+                  },
+                  decoration: _inputDecoration(
+                    hint: "Email",
+                    icon: Icons.email_outlined,
+                  ),
                 ),
               ),
 
@@ -146,8 +164,8 @@ class _LoginPageState extends State<LoginPage> {
                   child: const Text(
                     "Next",
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
                       color: Colors.white,
                     ),
                   ),
@@ -157,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
 
-        /// ✅ ERROR MESSAGE (THIS WAS MISSING)
+        /// ERROR MESSAGE
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -213,9 +231,9 @@ class _LoginPageState extends State<LoginPage> {
                           ? _emailController.text
                           : "name@school.com",
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF244A6A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -228,7 +246,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F6FDB),
+                        color: Color(0xFF106EB4),
                       ),
                     ),
                   ),
@@ -259,7 +277,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-
               const SizedBox(height: 8),
 
               /// FORGOT PASSWORD
@@ -275,14 +292,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     );
-
                   },
                   child: const Text(
                     "Forgot Password?",
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1F6FDB),
+                      color: Color(0xFF106EB4),
                     ),
                   ),
                 ),
@@ -350,7 +366,7 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception("Invalid email or password");
       }
 
-   final Map<String, dynamic> response = await _studentService
+      final Map<String, dynamic> response = await _studentService
           .fetchStudents();
 
       /// ✅ SAVE ONLY PARENT OBJECT
@@ -371,7 +387,6 @@ class _LoginPageState extends State<LoginPage> {
         context,
         MaterialPageRoute(builder: (_) => SelectChildPage(students: students)),
       );
-
     } catch (e) {
       if (!mounted) return;
 
@@ -408,6 +423,13 @@ class _LoginPageState extends State<LoginPage> {
     return InputDecoration(
       hintText: hint,
 
+      // 🔹 PLACEHOLDER STYLE (SemiBold)
+      hintStyle: const TextStyle(
+        fontWeight: FontWeight.w600, // SemiBold
+        fontSize: 15,
+        color: Colors.black45,
+      ),
+
       /// LEFT ICON (PNG or Material)
       prefixIcon: iconAsset != null
           ? Padding(
@@ -428,7 +450,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF1F6FDB)),
+        borderSide: const BorderSide(color: Color(0xFF1E6FD8)),
       ),
     );
   }
@@ -436,7 +458,7 @@ class _LoginPageState extends State<LoginPage> {
 
   ButtonStyle _buttonStyle() {
     return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF1F6FDB),
+      backgroundColor: const Color(0xFF1E6FD8),
       padding: const EdgeInsets.symmetric(vertical: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 0,

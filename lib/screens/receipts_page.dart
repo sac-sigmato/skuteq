@@ -26,10 +26,10 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
   Map<String, dynamic> summaryData = {};
 
   /// COLORS
-   static const Color pageBg = Color(0xFFEAF4FF);
+   static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
-  static const Color primaryBlue = Color(0xFF1E88E5);
-  static const Color mutedText = Color(0xFF7A869A);
+  static const Color primaryBlue = Color(0xFF1E6FD8);
+  static const Color mutedText = Color(0xFF7A8AAA);
 
   @override
   void initState() {
@@ -152,7 +152,7 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                   "Total Receipts",
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     color: primaryBlue,
                   ),
                 ),
@@ -160,8 +160,8 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                 Text(
                   "${summaryData['totalReceipts']}",
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -175,7 +175,7 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                   "Amount Paid",
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w600,
                     color: primaryBlue,
                   ),
                 ),
@@ -183,8 +183,8 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                 Text(
                   summaryData['amountPaid'] ?? '₹ 0',
                   style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -290,18 +290,18 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                   children: [
                     Text(
                       "#${r['receiptNo']}",
-                      style: const TextStyle(
+                     style: const TextStyle(
                         fontSize: 15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       r['date'],
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: mutedText,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -311,7 +311,7 @@ class _ReceiptsPageState extends State<ReceiptsPage> {
                 r['amount'],
                 style: const TextStyle(
                   fontSize: 15,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],

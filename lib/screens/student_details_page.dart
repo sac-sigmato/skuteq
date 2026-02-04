@@ -13,7 +13,7 @@ class StudentDetailsPage extends StatefulWidget {
 class _StudentDetailsPageState extends State<StudentDetailsPage> {
   int _selectedSegment = 0;
 
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color muted = Color(0xFF9AA6B2);
   static const Color selectedBg = Color(0xFFD0E7FF);
@@ -116,15 +116,16 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
                             Text(
                               student['full_name']?.toString() ?? '-',
                               style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "ID ${student['student_id'] ?? '-'}",
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
+                                 fontWeight: FontWeight.w600,
                                 color: muted,
                               ),
                             ),
@@ -201,12 +202,12 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
               color: enabled
                   ? (selected
                         ? const Color(0xFF0B2A4A)
-                        : const Color(0xFF7A8CA5))
+                        : const Color(0xFF7A8AAA))
                   : const Color(0xFFB0B8C4),
             ),
           ),
@@ -293,7 +294,7 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           ...children,
@@ -317,14 +318,14 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
               label,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: Colors.black54,
               ),
             ),
           ),
           Text(
             (value != null && value.isNotEmpty) ? value : '-',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ],
       ),

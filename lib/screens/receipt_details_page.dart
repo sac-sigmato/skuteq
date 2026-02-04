@@ -5,16 +5,18 @@ import 'package:skuteq_app/components/shared_app_head.dart';
 import 'package:skuteq_app/helpers/invoice_storage.dart';
 import 'package:skuteq_app/helpers/receipt_pdf_helper.dart';
 import 'package:skuteq_app/services/receipt_service.dart';
+import 'package:dotted_border/dotted_border.dart';
+
 
 class ReceiptDetailsPage extends StatelessWidget {
   final Map<String, dynamic> apiResponse;
 
   const ReceiptDetailsPage({super.key, required this.apiResponse});
 
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color primaryBlue = Color(0xFF1E88E5);
-  static const Color mutedText = Color(0xFF7A869A);
+  static const Color mutedText = Color(0xFF7A8AAA);
 
   @override
   Widget build(BuildContext context) {
@@ -97,12 +99,14 @@ class ReceiptDetailsPage extends StatelessWidget {
               children: [
                 Text(
                   "Receipt #${data['receipt_number'] ?? '-'}",
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   _formatDate(data['received_date']),
-                  style: const TextStyle(fontSize: 12, color: mutedText),
+                  style: const TextStyle(fontSize: 12, color: mutedText,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -113,8 +117,8 @@ class ReceiptDetailsPage extends StatelessWidget {
               Text(
                 "₹ ${_formatAmount(data['received_amount'])}",
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 8),
@@ -156,7 +160,7 @@ class ReceiptDetailsPage extends StatelessWidget {
                 label: const Text("PDF"),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: pageBg,
-                  foregroundColor: Colors.black87,
+                  foregroundColor: Colors.black,
                   side: BorderSide(color: cardBorder),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -167,7 +171,7 @@ class ReceiptDetailsPage extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                 ),
               ),
@@ -189,24 +193,57 @@ class ReceiptDetailsPage extends StatelessWidget {
             "Payment Summary",
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: primaryBlue,
             ),
           ),
           const SizedBox(height: 12),
 
           _row(
-            "Reference #",
+            RichText(
+              text: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Reference #",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                 
+                ],
+              ),
+            ),
             data['reference_number']?.isNotEmpty == true
                 ? data['reference_number']
                 : '-',
           ),
 
+
           const SizedBox(height: 10),
           const Divider(height: 1, color: Color(0xFFE6EEF6)),
           const SizedBox(height: 10),
 
-          _row("Paid On", _formatDateTime(data['received_date'])),
+         _row(
+            RichText(
+              text: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: "Paid On",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  
+                ],
+              ),
+            ),
+            _formatDateTime(data['received_date']),
+          ),
+
         ],
       ),
     );
@@ -223,7 +260,7 @@ class ReceiptDetailsPage extends StatelessWidget {
             "Details",
             style: TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: primaryBlue,
             ),
           ),
@@ -245,42 +282,55 @@ class ReceiptDetailsPage extends StatelessWidget {
             ),
 
           ...items.map((it) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FBFF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          it['line_item'] ?? '-',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: DottedBorder(
+                color: const Color(0xFFE6F0FA), // soft blue like SS
+                strokeWidth: 1.2,
+                dashPattern: const [6, 4], // dash-gap
+                borderType: BorderType.RRect,
+                radius: const Radius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  color: const Color(0xFFFFFFFF),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              it['line_item'] ?? '-',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize:15,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              it['invoice_number'] ?? '-',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: mutedText,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          it['invoice_number'] ?? '-',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: mutedText,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        "₹ ${_formatAmount(it['line_amount_received'])}",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600),
+                      ),
+                    ],
                   ),
-                  Text(
-                    "₹ ${_formatAmount(it['line_amount_received'])}",
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ],
+                ),
               ),
             );
           }).toList(),
+
         ],
       ),
     );
@@ -295,22 +345,28 @@ class ReceiptDetailsPage extends StatelessWidget {
         children: [
           const Text(
             "Amount in Words",
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
           const SizedBox(height: 6),
           Text(
             _amountInWords(data['received_amount']),
-            style: const TextStyle(color: mutedText),
+            style: const TextStyle( fontSize: 13,color: mutedText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 14),
           const Text(
             "Terms & Conditions",
-            style: TextStyle(fontWeight: FontWeight.w700),
+             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
           const SizedBox(height: 6),
           const Text(
             "All fee payments are final and cannot be refunded or transferred.",
-            style: TextStyle(color: mutedText),
+            style: const TextStyle(
+              fontSize: 13,
+              color: mutedText,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -331,14 +387,18 @@ class ReceiptDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value) {
+ Widget _row(Widget label, String value) {
     return Row(
       children: [
-        Expanded(child: Text(label)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Expanded(child: label),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
+
 
   String _amountInWords(dynamic value) {
     final num amount = num.tryParse(value?.toString() ?? '') ?? 0;

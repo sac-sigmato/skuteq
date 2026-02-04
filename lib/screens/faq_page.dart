@@ -32,7 +32,7 @@ class _FaqPageState extends State<FaqPage> {
 
   // Colors
   static const Color _pageBg = Color(0xFFF6FAFF);
-  static const Color _headerBg = Color(0xFFEAF4FF);
+  static const Color _headerBg = Color(0xFFF6FAFF);
   static const Color _cardBorder = Color(0xFFE7EFF7);
   static const Color _titleBlue = Color(0xFF244A6A);
   static const Color _muted = Color(0xFF9FA8B2);

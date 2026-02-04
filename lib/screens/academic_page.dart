@@ -26,11 +26,11 @@ class AcademicPage extends StatefulWidget {
 
 class _AcademicPageState extends State<AcademicPage> {
   // 🎨 COLORS
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBg = Colors.white;
   static const Color cardBorder = Color(0xFFE7EFF7);
-  static const Color subjectBg = Color(0xFFEFF6FF);
-  static const Color subjectBorder = Color(0xFFEAF4FF);
+  static const Color subjectBg = Color(0xFFEAF4FF);
+  static const Color subjectBorder = Color(0xFFF6FAFF);
 
   static const Color titleColor = Color(0xFF0B2E4E);
   static const Color primaryBlue = Color(0xFF1E88E5);
@@ -298,8 +298,8 @@ class _AcademicPageState extends State<AcademicPage> {
               "Exam Type",
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: titleColor,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
             ),
           ),
@@ -359,8 +359,8 @@ class _AcademicPageState extends State<AcademicPage> {
               child: Text(
                 "Subjects",
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   color: Colors.black,
                 ),
               ),
@@ -399,7 +399,7 @@ class _AcademicPageState extends State<AcademicPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: subjectBg,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(color: subjectBorder),
       ),
       child: Row(
@@ -410,10 +410,10 @@ class _AcademicPageState extends State<AcademicPage> {
               children: [
                 Text(
                   subject,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: titleColor,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -428,8 +428,8 @@ class _AcademicPageState extends State<AcademicPage> {
             ),
           ),
           Container(
-            width: 56,
-            height: 36,
+            width: 64,
+            height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -438,10 +438,10 @@ class _AcademicPageState extends State<AcademicPage> {
             ),
             child: Text(
               "$pct%",
-              style: const TextStyle(
+             style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w800,
-                color: titleColor,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
               ),
             ),
           ),
@@ -457,12 +457,12 @@ class _AcademicPageState extends State<AcademicPage> {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(color: subjectBorder),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Colors.black,

@@ -228,7 +228,7 @@ DateTime? _tryParseDate(String? s) {
                     child: Text(
                       _displayLine(opt), // ✅ single line format
                       style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         fontSize: 15,
                         color: Colors.black,
                       ),

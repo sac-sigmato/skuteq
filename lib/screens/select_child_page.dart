@@ -19,6 +19,25 @@ class _SelectChildPageState extends State<SelectChildPage> {
   final StudentService _studentService = StudentService();
   String _parentName = "Welcome";
 
+  List<Color> studentColors = [
+    Color(0xFF1E6FD8), // blue
+    Color(0xFF27AE60), // green
+    Color(0xFFF2994A), // orange
+    Color(0xFF9B51E0), // purple
+    Color(0xFFEB5757), // red
+    Color(0xFF56CCF2), // cyan
+  ];
+
+  Color studentColor(String studentId) {
+    final index = (studentId.hashCode & 0x7fffffff) % studentColors.length;
+    return studentColors[index];
+  }
+  Color randomStudentColor() {
+    final i = DateTime.now().millisecondsSinceEpoch;
+    return studentColors[i % studentColors.length];
+  }
+
+
 
   /// ✅ CENTRAL IMAGE RESOLVER
   String resolveStudentImageUrl(dynamic raw) {
@@ -73,25 +92,23 @@ class _SelectChildPageState extends State<SelectChildPage> {
       });
     }
   }
- 
-
 
   @override
   void initState() {
     super.initState();
     _saveChildrenToStorage();
-     _loadParentName();
+    _loadParentName();
   }
 
   @override
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF0B2A4A);
-    const Color pageBg = Color(0xFFEAF4FF);
+    const Color pageBg = Color(0xFFF6FAFF);
 
     return Scaffold(
       backgroundColor: pageBg,
       appBar: SharedAppHead(
-          title: _parentName,
+        title: _parentName,
         showDrawer: true,
         showBack: false,
       ),
@@ -265,12 +282,12 @@ class _SelectChildPageState extends State<SelectChildPage> {
               Container(
                 width: 56,
                 height: 56,
-                padding: const EdgeInsets.all(2),
+                // padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: highlight ? primaryBlue : Colors.grey[300]!,
-                    width: highlight ? 2.5 : 1.5,
+                    color: randomStudentColor(), // 👈 always per student
+                    width: 2,
                   ),
                 ),
                 child: ClipOval(
@@ -300,7 +317,9 @@ class _SelectChildPageState extends State<SelectChildPage> {
                     const SizedBox(height: 4),
                     Text(
                       school,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF7A8AAA),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),

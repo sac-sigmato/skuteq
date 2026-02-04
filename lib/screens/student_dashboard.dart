@@ -352,7 +352,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
   @override
   Widget build(BuildContext context) {
     const Color primaryBlue = Color(0xFF0E70B8);
-    const Color pageBg = Color(0xFFEAF4FF);
+    const Color pageBg = Color(0xFFF6FAFF);
 
     return Scaffold(
       backgroundColor: pageBg,

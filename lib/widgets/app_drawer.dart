@@ -39,7 +39,7 @@ class _AppDrawerState extends State<AppDrawer> {
     final avatarUrl = widget.parentData['avatarUrl'] ?? '';
 
     const Color logoutRed = Color(0xFFE24B4B);
-    const Color pageBg = Color(0xFFEAF4FF);
+    const Color pageBg = Color(0xFFF6FAFF);
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -74,14 +74,15 @@ class _AppDrawerState extends State<AppDrawer> {
                         name,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         "Parent ID P-$parentId",
                         style: TextStyle(
-                          fontSize: 12,
+                           fontSize: 13,
+                          fontWeight: FontWeight.w600,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -267,12 +268,12 @@ class _AppDrawerState extends State<AppDrawer> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 22),
+              Icon(icon, size: 30),
               const SizedBox(height: 6),
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),

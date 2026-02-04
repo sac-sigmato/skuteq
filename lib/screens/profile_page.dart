@@ -91,6 +91,59 @@ class ProfilePage extends StatelessWidget {
           body: Column(
             children: [
               // const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(0),
+                  border: Border.all(color: _cardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _cardBorder),
+                      ),
+                      child: ClipOval(
+                        child: Image.network(
+                          avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.person, color: _titleBlue),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(fontSize: 12, color: _muted,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               /// 🔹 CONTENT
               Expanded(
@@ -99,61 +152,6 @@ class ProfilePage extends StatelessWidget {
                   child: Column(
                     children: [
                       /// Profile summary card
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _cardBorder),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: _cardBorder),
-                              ),
-                              child: ClipOval(
-                                child: Image.network(
-                                  avatarUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.person,
-                                    color: _titleBlue,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: _titleBlue,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    subtitle,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: _muted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
                       const SizedBox(height: 14),
 
                       /// Profile fields
@@ -230,8 +228,9 @@ class ProfilePage extends StatelessWidget {
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black
                 ),
               ),
             ),
@@ -258,13 +257,13 @@ class ProfilePage extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 color: Color(0xFF7A8AAA),
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
           Text(
             value.isNotEmpty ? value : '-',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black),
           ),
         ],
       ),

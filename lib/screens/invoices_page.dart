@@ -43,7 +43,7 @@ class _InvoicesPageState extends State<InvoicesPage>
 
   // ---------------- COLORS ----------------
   static const Color bg = Color(0xFFF6FAFF);
-  static const Color pageBg = Color(0xFFEAF4FF);
+  static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color titleBlue = Color(0xFF244A6A);
   static const Color pillBg = Color(0xFFEFF7FF);
