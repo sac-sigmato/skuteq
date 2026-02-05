@@ -68,12 +68,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.initState();
     _pageController = PageController();
 
-    /// 🔁 AUTO LOOP
     _autoTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (!_pageController.hasClients) return;
 
       final nextPage = _pageController.page!.round() + 1;
-
       _pageController.animateToPage(
         nextPage,
         duration: const Duration(milliseconds: 400),
@@ -90,6 +88,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   static const Color pageBg = Color(0xFFF6FAFF);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,11 +96,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: SafeArea(
         child: Column(
           children: [
-            /// 🔁 LOOPING CONTENT
+            /// 🔁 PAGE CONTENT
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: 1000, // fake infinite
+                itemCount: 1000,
                 onPageChanged: (i) {
                   setState(() => _index = i % pages.length);
                 },
@@ -112,45 +111,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
 
-            /// 🔘 PAGE INDICATOR (OUTSIDE LOOP)
+            /// ✅ FIXED SIGN IN BUTTON
             Padding(
-              padding: const EdgeInsets.only(bottom: 150),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  pages.length,
-                  (i) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: _index == i
-                          ? const Color(0xFF000000)
-                          : const Color(0xFFD6DEEA),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                10,
+                20,
+                MediaQuery.of(context).padding.bottom + 20,
               ),
-            ),
-
-            /// ✅ FIXED SIGN IN BUTTON (OUTSIDE LOOP)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
               child: SizedBox(
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
                   onPressed: () async {
                     await AppPrefs.setOnboardingDone();
-
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const LoginPage()),
                     );
                   },
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1F6FDB),
                     elevation: 0,
@@ -175,74 +154,117 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
   }
 
-  /// 🔹 SINGLE PAGE CONTENT (NO BUTTON HERE)
+  /// 🔹 SINGLE PAGE CONTENT
   Widget _buildPage(Map<String, dynamic> data) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-      child: Column(
-        children: [
-          const SizedBox(height: 100),
-          Image.asset("assets/images/skuteq_logo.png", height: 34),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 260,
-            child: Image.asset(data["image"], fit: BoxFit.contain),
-          ),
-          const SizedBox(height: 20),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 60),
 
-          ...data["features"].map<Widget>((f) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE7EFF7)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF6FAFF),
-                      borderRadius: BorderRadius.circular(12),
+                    Image.asset("assets/images/skuteq_logo.png", height: 32),
+
+                    const SizedBox(height: 16),
+
+                    AspectRatio(
+                      aspectRatio: 1.1,
+                      child: Image.asset(data["image"], fit: BoxFit.contain),
                     ),
-                    child: Center(
-                      child: Image.asset(f["iconAsset"], width: 30, height: 30),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          f["title"],
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+
+                    const SizedBox(height: 16),
+
+                    ...data["features"].map<Widget>((f) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE7EFF7)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF6FAFF),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Image.asset(
+                                  f["iconAsset"],
+                                  width: 28,
+                                  height: 28,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    f["title"],
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    f["desc"],
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF7A8CA5),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+
+                    const SizedBox(height: 16),
+
+                    /// 🔘 PAGE INDICATOR (EXACT DESIGN POSITION)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        pages.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _index == i
+                                ? const Color(0xFF000000)
+                                : const Color(0xFFD6DEEA),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          f["desc"],
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF7A8CA5),
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    const Spacer(),
+                  ],
+                ),
               ),
-            );
-          }).toList(),
-        ],
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

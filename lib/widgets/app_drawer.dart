@@ -3,8 +3,6 @@ import 'package:skuteq_app/components/shared_app_head.dart';
 import 'package:skuteq_app/helpers/invoice_storage.dart';
 import 'package:skuteq_app/screens/select_child_page.dart';
 import 'package:skuteq_app/screens/login_page.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:skuteq_app/screens/settings_page.dart';
 import 'package:skuteq_app/services/amplify_auth_service.dart';
 import '../screens/profile_page.dart';
 import '../screens/faq_page.dart';
@@ -47,134 +45,140 @@ class _AppDrawerState extends State<AppDrawer> {
 
       body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            /// Profile
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              margin: const EdgeInsets.only(top: 12),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: avatarUrl.isNotEmpty
-                        ? NetworkImage(avatarUrl)
-                        : null,
-                    child: avatarUrl.isEmpty
-                        ? const Icon(Icons.person, color: Colors.black54)
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "Parent ID P-$parentId",
-                        style: TextStyle(
-                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            /// Action buttons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _actionCard(
-                    icon: Icons.sync,
-                    label: "Switch Child",
-                    onTap: () async {
-                      final students = await InvoiceStorage.getStudentsData();
-
-                      if (!mounted) return;
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SelectChildPage(students: students),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _actionCard(
-                    icon: Icons.person_outline,
-                    label: "My Profile",
-                    onTap: () async {
-                      final students = await InvoiceStorage.getStudentsData();
-
-                      if (!mounted) return;
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ProfilePage(
+            /// 🔹 SCROLLABLE CONTENT
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    /// Profile
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                      margin: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: avatarUrl.isNotEmpty
+                                ? NetworkImage(avatarUrl)
+                                : null,
+                            child: avatarUrl.isEmpty
+                                ? const Icon(
+                                    Icons.person,
+                                    color: Colors.black54,
+                                  )
+                                : null,
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                "Parent ID P-$parentId",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    /// Action buttons
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          _actionCard(
+                            icon: Icons.sync,
+                            label: "Switch Child",
+                            onTap: () async {
+                              final students =
+                                  await InvoiceStorage.getStudentsData();
+                              if (!mounted) return;
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      SelectChildPage(students: students),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _actionCard(
+                            icon: Icons.person_outline,
+                            label: "My Profile",
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ProfilePage(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    _listTile(
+                      icon: Icons.settings_outlined,
+                      title: "Settings",
+                      onTap: () {},
+                    ),
+                    _listTile(
+                      icon: Icons.help_outline,
+                      title: "FAQs",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const FaqPage()),
+                        );
+                      },
+                    ),
+                    _listTile(
+                      icon: Icons.info_outline,
+                      title: "About Skuteq",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AboutSkuteqPage(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 18),
-
-            _listTile(
-              icon: Icons.settings_outlined,
-              title: "Settings",
-              onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (_) => const SettingsPage()),
-                // );
-              },
-            ),
-            _listTile(
-              icon: Icons.help_outline,
-              title: "FAQs",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const FaqPage()),
-                );
-              },
-            ),
-            _listTile(
-              icon: Icons.info_outline,
-              title: "About Skuteq",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AboutSkuteqPage()),
-                );
-              },
-            ),
-
-            // const Spacer(),
-
-            /// Logout Button
+            /// 🔹 FIXED LOGOUT BUTTON
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               child: SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -217,34 +221,23 @@ class _AppDrawerState extends State<AppDrawer> {
   /// 🔹 Logout handler
   Future<void> _handleLogout() async {
     setState(() => _isSigningOut = true);
-
     try {
-      print("➡️ Logout button pressed");
-
-      await AmplifyAuthService().signOut(); // ✅ CALL YOUR LOGGING FUNCTION
+      await AmplifyAuthService().signOut();
       await InvoiceStorage.clearAll();
 
-      print("➡️ Navigating to Login page");
-
       if (!mounted) return;
-
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
-        (route) => false,
+        (_) => false,
       );
-    } catch (e) {
-      print("❌ Logout flow failed: $e");
-
+    } catch (_) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Logout failed. Try again")));
     } finally {
-      if (mounted) {
-        setState(() => _isSigningOut = false);
-      }
+      if (mounted) setState(() => _isSigningOut = false);
     }
   }
 

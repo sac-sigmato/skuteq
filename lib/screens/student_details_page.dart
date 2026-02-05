@@ -12,11 +12,12 @@ class StudentDetailsPage extends StatefulWidget {
 
 class _StudentDetailsPageState extends State<StudentDetailsPage> {
   int _selectedSegment = 0;
+  bool _isLoading = true;
 
   static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color muted = Color(0xFF9AA6B2);
-  static const Color selectedBg = Color(0xFFD0E7FF);
+  static const Color skeleton = Color(0xFFE9EEF5);
 
   Map<String, dynamic> get student => widget.studentData['data'] ?? {};
   Map<String, dynamic> get mother => student['is_mother_details'] == true
@@ -25,6 +26,16 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   Map<String, dynamic> get father => student['is_father_details'] == true
       ? student['father_details'] ?? {}
       : {};
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// simulate API / processing delay
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
 
   String _fmtDate(String? iso) {
     if (iso == null || iso.isEmpty) return '-';
@@ -52,23 +63,15 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
   ][m - 1];
 
   String _resolveImageUrl(String? raw) {
-    if (raw == null) return '';
-    final url = raw.trim();
-    if (url.isEmpty) return '';
-
-    // already full URL
-    if (url.startsWith('http')) return url;
-
-    // your CDN case
-    return 'https://dev-cdn.skuteq.net/public/$url';
+    if (raw == null || raw.trim().isEmpty) return '';
+    if (raw.startsWith('http')) return raw;
+    return 'https://dev-cdn.skuteq.net/public/$raw';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: pageBg,
-
-      // ✅ Common Header
       appBar: SharedAppHead(
         title: "Student Details",
         showDrawer: false,
@@ -78,93 +81,32 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 12),
+              padding: EdgeInsets.fromLTRB(
+                0,
+                12,
+                0,
+                MediaQuery.of(context).padding.bottom + 16,
+              ),
               child: Column(
                 children: [
-                  /// PROFILE CARD
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Colors.grey.shade200,
-                          backgroundImage:
-                              _resolveImageUrl(student['image_url']).isNotEmpty
-                              ? NetworkImage(
-                                  _resolveImageUrl(student['image_url']),
-                                )
-                              : null,
-                          child: _resolveImageUrl(student['image_url']).isEmpty
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 28,
-                                  color: Colors.black54,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              student['full_name']?.toString() ?? '-',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "ID ${student['student_id'] ?? '-'}",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                 fontWeight: FontWeight.w600,
-                                color: muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
+                  _isLoading ? _profileSkeleton() : _profileCard(),
                   const SizedBox(height: 18),
-
-                  _segmentedToggle(),
-
+                  _isLoading ? _segmentSkeleton() : _segmentedToggle(),
                   const SizedBox(height: 16),
-
-                  /// DETAILS
-                  _detailsCard(
-                    title: _selectedSegment == 0
-                        ? "Basic Information"
-                        : _selectedSegment == 1
-                        ? "Mother Details"
-                        : "Father Details",
-                    children: _selectedSegment == 0
-                        ? _studentFields()
-                        : _selectedSegment == 1
-                        ? _parentFields(mother)
-                        : _parentFields(father),
-                  ),
-
-                  if (_selectedSegment == 0)
-                    _detailsCard(
-                      title: "Enrollment",
-                      children: [
-                        _field(
-                          "Date of Admission",
-                          _fmtDate(student['date_of_admission']),
+                  _isLoading
+                      ? _detailsSkeleton()
+                      : _detailsCard(
+                          title: _selectedSegment == 0
+                              ? "Basic Information"
+                              : _selectedSegment == 1
+                              ? "Mother Details"
+                              : "Father Details",
+                          children: _selectedSegment == 0
+                              ? _studentFields()
+                              : _selectedSegment == 1
+                              ? _parentFields(mother)
+                              : _parentFields(father),
                         ),
-                      ],
-                    ),
                 ],
               ),
             ),
@@ -174,47 +116,162 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     );
   }
 
-  Widget _segmentItem(
-    String label,
-    int index, {
-    bool enabled = true,
-    bool isFirst = false,
-    bool isLast = false,
-  }) {
-    final bool selected = _selectedSegment == index;
+  // ---------------- REAL UI ----------------
 
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.horizontal(
-          left: isFirst ? const Radius.circular(24) : Radius.zero,
-          right: isLast ? const Radius.circular(24) : Radius.zero,
-        ),
-        onTap: enabled ? () => setState(() => _selectedSegment = index) : null,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFEAF4FF) : Colors.transparent,
-            borderRadius: BorderRadius.horizontal(
-              left: isFirst ? const Radius.circular(14) : Radius.zero,
-              right: isLast ? const Radius.circular(14) : Radius.zero,
+  Widget _profileCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.grey.shade200,
+            backgroundImage: _resolveImageUrl(student['image_url']).isNotEmpty
+                ? NetworkImage(_resolveImageUrl(student['image_url']))
+                : null,
+            child: _resolveImageUrl(student['image_url']).isEmpty
+                ? const Icon(Icons.person, size: 28)
+                : null,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  student['full_name'] ?? '-',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "ID ${student['student_id'] ?? '-'}",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: muted,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: enabled
-                  ? (selected
-                        ? const Color(0xFF0B2A4A)
-                        : const Color(0xFF7A8AAA))
-                  : const Color(0xFFB0B8C4),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- SKELETONS ----------------
+
+  Widget _profileSkeleton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: [
+          _skelCircle(56),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _skelLine(140),
+                const SizedBox(height: 8),
+                _skelLine(90),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _segmentSkeleton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      height: 46,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        children: List.generate(
+          3,
+          (_) => Expanded(child: Center(child: _skelLine(60))),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailsSkeleton() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(
+          6,
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _skelField(),
           ),
         ),
       ),
     );
   }
+
+  Widget _skelField() {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: skeleton,
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  Widget _skelLine(double width) {
+    return Container(
+      height: 12,
+      width: width,
+      decoration: BoxDecoration(
+        color: skeleton,
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
+  }
+
+  Widget _skelCircle(double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: skeleton, shape: BoxShape.circle),
+    );
+  }
+
+  // ---------------- DATA UI ----------------
 
   Widget _segmentedToggle() {
     return Container(
@@ -246,32 +303,36 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     );
   }
 
-  Widget _divider() {
-    return Container(width: 1, height: double.infinity, color: cardBorder);
-  }
-
-  /// SEGMENT
-  Widget _segment(String label, int index, {bool enabled = true}) {
+  Widget _segmentItem(
+    String label,
+    int index, {
+    bool enabled = true,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
     final selected = _selectedSegment == index;
-
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: enabled ? () => setState(() => _selectedSegment = index) : null,
         child: Container(
-          height: 42,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: selected ? selectedBg : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: cardBorder),
-          ),
           alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFEAF4FF) : Colors.transparent,
+            borderRadius: BorderRadius.horizontal(
+              left: isFirst ? const Radius.circular(14) : Radius.zero,
+              right: isLast ? const Radius.circular(14) : Radius.zero,
+            ),
+          ),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: enabled ? Colors.black : Colors.black38,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: enabled
+                  ? (selected
+                        ? const Color(0xFF0B2A4A)
+                        : const Color(0xFF7A8AAA))
+                  : const Color(0xFFB0B8C4),
             ),
           ),
         ),
@@ -279,7 +340,9 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
     );
   }
 
-  /// DETAILS CARD
+  Widget _divider() =>
+      Container(width: 1, height: double.infinity, color: cardBorder);
+
   Widget _detailsCard({required String title, required List<Widget> children}) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -316,15 +379,11 @@ class _StudentDetailsPageState extends State<StudentDetailsPage> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black54,
-              ),
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
             ),
           ),
           Text(
-            (value != null && value.isNotEmpty) ? value : '-',
+            value?.isNotEmpty == true ? value! : '-',
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
         ],

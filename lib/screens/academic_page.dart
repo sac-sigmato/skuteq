@@ -24,7 +24,8 @@ class AcademicPage extends StatefulWidget {
   State<AcademicPage> createState() => _AcademicPageState();
 }
 
-class _AcademicPageState extends State<AcademicPage> {
+class _AcademicPageState extends State<AcademicPage>
+    with TickerProviderStateMixin {
   // 🎨 COLORS
   static const Color pageBg = Color(0xFFF6FAFF);
   static const Color cardBg = Colors.white;
@@ -35,6 +36,9 @@ class _AcademicPageState extends State<AcademicPage> {
   static const Color titleColor = Color(0xFF0B2E4E);
   static const Color primaryBlue = Color(0xFF1E88E5);
   static const Color mutedText = Color(0xFF9AA6B2);
+
+  late AnimationController _skeletonCtrl;
+  late Animation<double> _skeletonFade;
 
   bool _loading = false;
 
@@ -47,6 +51,14 @@ class _AcademicPageState extends State<AcademicPage> {
   @override
   void initState() {
     super.initState();
+
+    _skeletonCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+
+    _skeletonFade = Tween<double>(begin: 0.35, end: 0.7).animate(_skeletonCtrl);
+
     _exams = widget.exams;
     _selectedExamId = widget.selectedExamId;
 
@@ -57,6 +69,12 @@ class _AcademicPageState extends State<AcademicPage> {
     _selectedExamName = selected.name;
 
     _subjects = _extractSubjects(widget.initialReport);
+  }
+
+  @override
+  void dispose() {
+    _skeletonCtrl.dispose();
+    super.dispose();
   }
 
   // ✅ robust subject extractor
@@ -266,13 +284,6 @@ class _AcademicPageState extends State<AcademicPage> {
                     ],
                   ),
                 ),
-                if (_loading)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.white.withOpacity(0.55),
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -365,8 +376,11 @@ class _AcademicPageState extends State<AcademicPage> {
                 ),
               ),
             ),
+
             Expanded(
-              child: _subjects.isEmpty
+              child: _loading
+                  ? SingleChildScrollView(child: _subjectsSkeleton())
+                  : _subjects.isEmpty
                   ? Center(
                       child: Text(
                         "$_selectedExamName data not available",
@@ -383,6 +397,63 @@ class _AcademicPageState extends State<AcademicPage> {
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _skeletonBox({
+    double height = 16,
+    double width = double.infinity,
+    double radius = 12,
+  }) {
+    return FadeTransition(
+      opacity: _skeletonFade,
+      child: Container(
+        height: height,
+        width: width,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE9EFF6),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+    );
+  }
+
+  Widget _subjectsSkeleton() {
+    return Column(
+      children: List.generate(
+        4,
+        (_) => Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: subjectBg,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: subjectBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _skeletonBox(height: 14, width: 160),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _skeletonBox(height: 26, width: 80, radius: 5),
+                        const SizedBox(width: 8),
+                        _skeletonBox(height: 26, width: 90, radius: 5),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              _skeletonBox(height: 40, width: 64, radius: 18),
+            ],
+          ),
         ),
       ),
     );
@@ -410,7 +481,7 @@ class _AcademicPageState extends State<AcademicPage> {
               children: [
                 Text(
                   subject,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
@@ -438,7 +509,7 @@ class _AcademicPageState extends State<AcademicPage> {
             ),
             child: Text(
               "$pct%",
-             style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black,

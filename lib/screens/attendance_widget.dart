@@ -334,14 +334,28 @@ class _AttendancePageState extends State<AttendancePage> {
                   ),
                 ),
               ),
-              Text(
-                "$present / $total days",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                ),
+             Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: primaryBlue,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "$present / $total days",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
+
             ],
           ),
         ],
@@ -370,6 +384,8 @@ class _AttendancePageState extends State<AttendancePage> {
               _calendarGrid(),
               const SizedBox(height: 16),
               _legendRow(),
+                const SizedBox(height: 14),
+              ..._holidayList(),
             ],
           ),
         ),
@@ -388,6 +404,39 @@ class _AttendancePageState extends State<AttendancePage> {
       ],
     );
   }
+
+  List<Widget> _holidayList() {
+    final holidays = _attendance['holidays'];
+    if (holidays is! List || holidays.isEmpty) return [];
+
+    return holidays.map<Widget>((h) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF3FF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 16, color: primaryBlue),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                h.toString(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
 
   Widget _calendarHeader() {
     final nextMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 1);

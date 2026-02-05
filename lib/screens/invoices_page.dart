@@ -47,7 +47,7 @@ class _InvoicesPageState extends State<InvoicesPage>
   static const Color cardBorder = Color(0xFFE6EEF6);
   static const Color titleBlue = Color(0xFF244A6A);
   static const Color pillBg = Color(0xFFEFF7FF);
-  static const Color muted = Color(0xFF9FA8B2);
+  static const Color muted = Color(0xFF7A8AAA);
 
   // ================= DATA =================
 
@@ -132,72 +132,72 @@ class _InvoicesPageState extends State<InvoicesPage>
 
   Widget _animatedToggle() {
     final totalWidth = MediaQuery.of(context).size.width - 32;
-    final pillWidth = (totalWidth - 6) / 2;
 
     return Container(
       height: 44,
       width: totalWidth,
+      padding: const EdgeInsets.all(3), // ✅ matches SS inner gap
+      // decoration: BoxDecoration(
+      //   color: Colors.white,
+      //   borderRadius: BorderRadius.circular(13),
+      //   border: Border.all(color: cardBorder),
+      // ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(13),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFEFF7FF).withOpacity(0.8),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
+
       child: Stack(
         children: [
-          AnimatedBuilder(
-            animation: _pillAnimation,
-            builder: (_, __) {
-              return Positioned(
-                left: _pillAnimation.value,
-                top: 3,
-                child: Container(
-                  width: pillWidth,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF7FF),
-                    borderRadius: BorderRadius.circular(19),
-                  ),
-                ),
-              );
-            },
+          // 🔵 SLIDING PILL (BOTH DIRECTIONS)
+          AnimatedAlign(
+            alignment: _selectedTab == 0
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeInOut,
+            child: Container(
+              width: (totalWidth - 6) / 2,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF7FF),
+                borderRadius: BorderRadius.circular(11),
+              ),
+            ),
           ),
 
+          // 📝 LABELS
           Row(
-            children: [
-              _toggleItem("Outstanding", 0, pillWidth),
-              _toggleItem("Paid", 1, pillWidth),
-            ],
+            children: [_toggleItem("Outstanding", 0), _toggleItem("Paid", 1)],
           ),
         ],
       ),
     );
   }
 
-  Widget _toggleItem(String title, int index, double pillWidth) {
+  Widget _toggleItem(String title, int index) {
     final active = _selectedTab == index;
 
-    return SizedBox(
-      width: pillWidth,
+    return Expanded(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
           if (_selectedTab == index) return;
 
-          // 🔥 CALCULATE FROM & TO EXPLICITLY
-          final double fromLeft = _selectedTab == 0 ? 3.0 : pillWidth + 3;
-          final double toLeft = index == 0 ? 3.0 : pillWidth + 3;
-
-          _pillAnimation = Tween<double>(begin: fromLeft, end: toLeft).animate(
-            CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-          );
-
-          // 🚀 START ANIMATION FIRST
-          _controller.forward(from: 0);
-
-          // 🔁 UPDATE STATE AFTER
           setState(() {
             _selectedTab = index;
-            _pillLeft = toLeft; // persist
           });
         },
         child: Center(
@@ -206,8 +206,10 @@ class _InvoicesPageState extends State<InvoicesPage>
             curve: Curves.easeInOut,
             style: TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: active ? const Color(0xFF244A6A) : Colors.black45,
+              fontWeight: FontWeight.w600,
+              color: active
+                  ? Colors.black
+                  : const Color(0xFF7A8AAA), // ✅ SS muted
             ),
             child: Text(title),
           ),
@@ -330,12 +332,12 @@ class _InvoicesPageState extends State<InvoicesPage>
     Color badgeText = Colors.white;
 
     if (status == 'paid') {
-      badgeBg = const Color(0xFF2ECC71);
+      badgeBg = const Color(0xFF27AE60);
     } else if (status.contains('part')) {
-      badgeBg = const Color(0xFFFFD54F);
+      badgeBg = const Color(0xFFFFD856);
       badgeText = Colors.black;
     } else {
-      badgeBg = const Color(0xFFF39C12);
+      badgeBg = const Color(0xFFFFB74D);
       badgeText = Colors.black;
     }
 
@@ -353,8 +355,8 @@ class _InvoicesPageState extends State<InvoicesPage>
       child: Row(
         children: [
           SizedBox(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             child: Transform.rotate(
               angle: -math.pi / 180,
               child: Image.asset(
@@ -373,14 +375,15 @@ class _InvoicesPageState extends State<InvoicesPage>
                   _getTitle(item),
                   style: const TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: titleBlue,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 2),
                 Text(
                   "Invoice #${_getInvoiceId(item)}",
-                  style: const TextStyle(fontSize: 12, color: muted),
+                  style: const TextStyle(fontSize: 13,
+                    fontWeight: FontWeight.w600, color: muted),
                 ),
               ],
             ),
@@ -390,23 +393,22 @@ class _InvoicesPageState extends State<InvoicesPage>
             children: [
               Text(
                 _formatAmount(item['invoice_total']),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: const TextStyle(fontSize: 15,
+                    fontWeight: FontWeight.w600, color: Colors.black),
+                
               ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: badgeBg,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(3),
                 ),
                 child: Text(
                   item['status'],
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: badgeText,
                   ),
                 ),
